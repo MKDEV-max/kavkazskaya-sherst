@@ -1,0 +1,12 @@
+{
+  "name": "kavkazskaya-sherst",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Интернет-магазин овечьей шерсти «Кавказская шерсть» с оплатой через ЮKassa",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

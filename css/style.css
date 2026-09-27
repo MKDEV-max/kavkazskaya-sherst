@@ -1,0 +1,96 @@
+/* Кавказская шерсть — общие стили. Палитра взята с логотипа. */
+:root {
+  --bg: #F7F6F2;          /* фон */
+  --surface: #FFFFFF;     /* карточки, как белый фон логотипа */
+  --ink: #16232A;         /* Графит — круг и надпись логотипа */
+  --muted: #56625F;
+  --line: #D9DCD6;
+  --slate: #4E5E58;       /* Склон — горы на логотипе */
+  --glacier: #2F7C80;     /* Ледник — бирюзовая грань вершины */
+  --fleece: #F3EFE4;      /* Руно — шерсть барана */
+  --btn: #16232A;
+  --btn-ink: #F7F6F2;
+  --display: "Merriweather", "PT Serif", Georgia, serif;
+  --body: "Golos Text", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0E1619; --surface: #15222A; --ink: #ECE9E1; --muted: #9BA7A3; --line: #26343B;
+    --slate: #8FA29A; --glacier: #7CC0C1; --fleece: #EDE8DA; --btn: #ECE9E1; --btn-ink: #0E1619;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0E1619; --surface: #15222A; --ink: #ECE9E1; --muted: #9BA7A3; --line: #26343B;
+  --slate: #8FA29A; --glacier: #7CC0C1; --fleece: #EDE8DA; --btn: #ECE9E1; --btn-ink: #0E1619;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 16px/1.6 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--glacier); outline-offset: 3px; border-radius: 2px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.15; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.wrap { max-width: 1200px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); }
+.eyebrow { font: 500 12px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--glacier); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* Эмблема: круглая часть логотипа */
+.badge {
+  display: block; flex: none; width: 48px; height: 48px; border-radius: 50%;
+  background: #fff url("../assets/logo.webp") no-repeat;
+  background-size: 170.7%; background-position: 50% 12.3%;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.lockup { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
+.lockup .name { font: 900 19px/1.05 var(--display); }
+
+/* Шапка */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+}
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 10px; flex-wrap: wrap; }
+.nav { display: flex; gap: clamp(12px, 2.4vw, 28px); flex-wrap: wrap; align-items: center; font-size: 15px; }
+.nav a { text-decoration: none; color: var(--muted); }
+.nav a:hover, .nav a[aria-current="page"] { color: var(--ink); }
+.count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; background: var(--glacier); color: #fff; font: 600 11px/1 var(--body); }
+.count[data-n="0"] { background: var(--line); color: var(--muted); }
+
+/* Кнопки */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border-radius: 6px;
+  background: var(--btn); color: var(--btn-ink); text-decoration: none; border: 0;
+  font: 500 15px/1 var(--body); cursor: pointer;
+}
+.btn:hover { filter: brightness(1.15); }
+.btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+
+/* Секции */
+section { padding-block: clamp(56px, 8vw, 96px); }
+.section-head { display: grid; gap: 12px; max-width: 64ch; margin-bottom: clamp(28px, 4vw, 48px); }
+.section-head h2 { font-size: clamp(30px, 4vw, 46px); }
+
+/* Canvas волокна */
+canvas.crimp { display: block; width: 100%; height: 100%; }
+
+/* Шкала качества */
+.meter { display: flex; gap: 3px; }
+.meter i { width: 14px; height: 5px; border-radius: 1px; background: var(--line); }
+.meter i.on { background: var(--glacier); }
+
+/* Подвал */
+.foot { border-top: 1px solid var(--line); padding-block: 36px; }
+.foot .wrap { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; align-items: center; }
+.foot small { color: var(--muted); font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

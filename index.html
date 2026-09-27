@@ -1,21 +1,34 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Кавказская шерсть</title>
 <meta name="description" content="Овечья шерсть кавказских пород: тонкая, полутонкая, полугрубая и грубая. Немытая, мытая и чёсаная. Оплата онлайн, доставка по России.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Merriweather:wght@700;900&display=swap">
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/shop.css">
-<link rel="stylesheet" href="css/motion.css">
+<!-- эмблема первого экрана — главное изображение: грузим раньше остального -->
+<link rel="preload" as="image" href="assets/logo.webp" fetchpriority="high">
+<link rel="stylesheet" href="css/main.css">
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="ridge" viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax slice">
-    <polygon fill="#4E5E58" points="0,200 0,120 140,60 230,110 360,20 470,95 560,55 700,130 820,40 930,100 1040,70 1200,120 1200,200"/>
-    <polygon fill="#F3EFE4" points="360,20 328,42 345,38 358,50 372,40 392,42"/>
-    <polygon fill="#F3EFE4" points="560,55 526,70 540,68 552,76 566,68 588,70"/>
-    <polygon fill="#F3EFE4" points="820,40 791,62 808,57 822,68 838,58 860,62"/>
-    <polyline fill="none" stroke="#7CC0C1" stroke-width="2" points="360,20 392,42"/>
-    <polygon fill="#22343A" points="0,200 0,170 180,110 300,160 450,90 600,170 760,100 900,165 1050,120 1200,160 1200,200"/>
-  </symbol>
+<!-- Силуэт гор. Один рисунок, два символа:
+     ridge     — 1600×200 (8:1) для первого экрана;
+     ridge-low — тот же рисунок, сплющенный до 1600×120 (13.3:1) для шапок разделов.
+     slice + xMidYMax: рисунок заполняет блок, прижат к низу, лишнее срезается только по бокам.
+     Верх не срезается никогда, потому что CSS держит блок не шире пропорции рисунка. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="ridge-shapes">
+      <polygon fill="#4E5E58" points="0,200 0,125 90,95 170,110 290,40 380,95 470,70 560,120 700,22 800,90 880,60 980,118 1100,35 1210,100 1300,75 1420,115 1520,55 1600,95 1600,200"/>
+      <polygon fill="#F3EFE4" points="290,40 252,62 266,58 278,68 292,60 306,66 326,62"/>
+      <polygon fill="#F3EFE4" points="700,22 666,46 680,42 692,52 706,44 720,50 735,46"/>
+      <polygon fill="#F3EFE4" points="1100,35 1068,57 1082,53 1094,63 1108,55 1120,61 1137,57"/>
+      <polygon fill="#F3EFE4" points="1520,55 1490,73 1502,70 1512,78 1524,71 1536,76 1556,73"/>
+      <polyline fill="none" stroke="#86C8C9" stroke-width="2" stroke-linecap="round" points="700,22 735,46"/>
+      <polygon fill="#35474A" points="0,200 0,150 120,130 240,145 360,110 480,150 620,125 780,150 940,118 1060,150 1200,128 1360,152 1500,120 1600,140 1600,200"/>
+      <polygon fill="#22343A" points="0,200 0,168 150,125 260,160 420,112 560,172 720,120 860,166 1010,115 1160,170 1300,128 1440,166 1600,134 1600,200"/>
+    </g>
+  </defs>
+  <symbol id="ridge" viewBox="0 0 1600 200" preserveAspectRatio="xMidYMax slice"><use href="#ridge-shapes"/></symbol>
+  <symbol id="ridge-low" viewBox="0 0 1600 120" preserveAspectRatio="xMidYMax slice"><use href="#ridge-shapes" transform="scale(1 .6)"/></symbol>
 </svg>
 
 <header class="top">
@@ -25,11 +38,13 @@
       <span class="name">Кавказская<br>шерсть</span>
     </a>
     <nav class="nav" id="nav" aria-label="Разделы сайта">
-      <a href="#glavnaya">Главная</a>
-      <a href="#o-nas">О нас</a>
-      <a href="#katalog">Каталог</a>
-      <a href="#dostavka">Доставка и оплата</a>
-      <a href="#kontakty">Контакты</a>
+      <div class="nav-head"><b>Меню</b><button class="rm" id="nav-close" type="button" aria-label="Закрыть меню">×</button></div>
+      <a class="nav-link" href="#glavnaya">Главная</a>
+      <a class="nav-link" href="#o-nas">О нас</a>
+      <a class="nav-link" href="#katalog">Каталог</a>
+      <a class="nav-link" href="#dostavka">Доставка и оплата</a>
+      <a class="nav-link" href="#kontakty">Контакты</a>
+      <div class="nav-foot"><span>Телефон</span><b>[+7 000 000-00-00]</b><span>Пн–сб, 9:00–19:00</span></div>
     </nav>
     <div class="top-actions">
       <button class="cart-btn" type="button" data-open-cart aria-label="Открыть корзину">
@@ -42,6 +57,10 @@
       </button>
     </div>
   </div>
+  <div class="read-bar" id="read-bar" aria-hidden="true"></div>
+  <div class="route-bar" id="route-bar" aria-hidden="true"></div>
+  <!-- затемнение внутри шапки: так меню и затемнение в одном слое и меню всегда поверх -->
+  <div class="nav-scrim" id="nav-scrim" aria-hidden="true"></div>
 </header>
 
 <main>
@@ -58,9 +77,12 @@
             <a class="btn outline" href="#o-nas">О компании</a>
           </div>
         </div>
-        <span class="badge big" role="img" aria-label="Логотип «Кавказская шерсть»: баран на фоне гор"></span>
+        <div class="hero-emblem">
+          <!-- width/height задают пропорцию заранее: место под картинку занято до загрузки, ничего не дёргается -->
+          <img src="assets/logo.webp" width="1024" height="1024" alt="Логотип «Кавказская шерсть»: баран на фоне гор" fetchpriority="high" decoding="async">
+        </div>
       </div>
-      <svg class="ridge" aria-hidden="true"><use href="#ridge"/></svg>
+      <svg class="ridge" aria-hidden="true" focusable="false"><use href="#ridge"/></svg>
     </section>
 
     <section class="perks">
@@ -145,7 +167,7 @@
   <div class="page" id="p-o-nas" data-page="o-nas" hidden>
     <header class="page-head">
       <div class="wrap"><p class="crumbs"><a href="#glavnaya">Главная</a> / О нас</p><h1>О компании</h1></div>
-      <svg class="ridge" aria-hidden="true"><use href="#ridge"/></svg>
+      <svg class="ridge ridge-low" aria-hidden="true" focusable="false"><use href="#ridge-low"/></svg>
     </header>
 
     <section>
@@ -189,6 +211,25 @@
           <div class="gl-row"><img src="assets/photos/coarse-raw.jpg" alt="" loading="lazy"><div><h3>Грубая</h3><p>Пух, переходной волос, ость и мёртвый волос. Неоднородная, самая прочная.</p></div><div class="gl-q"><span class="meter" role="img" aria-label="Качество 1 из 4"><i class="on"></i><i></i><i></i><i></i></span><small>Базовое</small></div></div>
         </div>
 
+        <div class="spec">
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Характеристики сортов, таблица прокручивается по горизонтали">
+            <table class="spec-table">
+              <caption>Характеристики сортов</caption>
+              <thead>
+                <tr><th scope="col">Сорт</th><th scope="col">Тонина</th><th scope="col">Длина штапеля</th><th scope="col">Однородность</th><th scope="col">Состав волокна</th><th scope="col">Применение</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Тонкая</th><td class="mono">до 25 мкм</td><td class="mono">6–10 см</td><td>однородная</td><td>пух</td><td>пряжа, трикотаж, тонкие ткани</td></tr>
+                <tr><th scope="row">Полутонкая</th><td class="mono">25–67 мкм</td><td class="mono">8–15 см</td><td>однородная</td><td>грубый пух, переходной волос</td><td>костюмные ткани, пряжа</td></tr>
+                <tr><th scope="row">Полугрубая</th><td class="mono">смешанная</td><td class="mono">10–20 см</td><td>неоднородная</td><td>пух, переходной волос, тонкая ость</td><td>ковры, войлок, ручное прядение</td></tr>
+                <tr><th scope="row">Грубая</th><td class="mono">смешанная</td><td class="mono">10–25 см</td><td>неоднородная</td><td>пух, переходной волос, ость, мёртвый волос</td><td>валяние, валенки, бурки, утеплитель</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="scroll-hint" aria-hidden="true">← Листайте таблицу вбок →</p>
+          <p class="muted small" style="margin-top:12px">Длина штапеля указана по типичным значениям. Точные тонина, длина и сорность есть в паспорте каждой партии.</p>
+        </div>
+
         <div class="section-head" style="margin-top:64px">
           <h2>Породы овец</h2>
           <p class="muted">От породы зависит, какую шерсть она даёт.</p>
@@ -213,7 +254,7 @@
   <div class="page" id="p-katalog" data-page="katalog" hidden>
     <header class="page-head">
       <div class="wrap"><p class="crumbs"><a href="#glavnaya">Главная</a> / Каталог</p><h1>Каталог шерсти</h1></div>
-      <svg class="ridge" aria-hidden="true"><use href="#ridge"/></svg>
+      <svg class="ridge ridge-low" aria-hidden="true" focusable="false"><use href="#ridge-low"/></svg>
     </header>
     <section class="catalog">
       <div class="wrap">
@@ -251,7 +292,7 @@
   <div class="page" id="p-dostavka" data-page="dostavka" hidden>
     <header class="page-head">
       <div class="wrap"><p class="crumbs"><a href="#glavnaya">Главная</a> / Доставка и оплата</p><h1>Доставка и оплата</h1></div>
-      <svg class="ridge" aria-hidden="true"><use href="#ridge"/></svg>
+      <svg class="ridge ridge-low" aria-hidden="true" focusable="false"><use href="#ridge-low"/></svg>
     </header>
     <section>
       <div class="wrap info-page">
@@ -285,7 +326,7 @@
   <div class="page" id="p-kontakty" data-page="kontakty" hidden>
     <header class="page-head">
       <div class="wrap"><p class="crumbs"><a href="#glavnaya">Главная</a> / Контакты</p><h1>Контакты</h1></div>
-      <svg class="ridge" aria-hidden="true"><use href="#ridge"/></svg>
+      <svg class="ridge ridge-low" aria-hidden="true" focusable="false"><use href="#ridge-low"/></svg>
     </header>
     <section>
       <div class="wrap">
@@ -389,6 +430,10 @@
 </aside>
 
 <div class="toast" id="toast" role="status" hidden></div>
+
+<button class="to-top" id="to-top" type="button" aria-label="Наверх">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
 
 <footer class="site-foot">
   <div class="wrap foot-grid">

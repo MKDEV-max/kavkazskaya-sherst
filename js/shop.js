@@ -99,14 +99,100 @@
     c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
   }
 
+  // Полоска загрузки вверху при смене раздела
+  function progress() {
+    var bar = $('route-bar');
+    bar.classList.remove('run'); void bar.offsetWidth; bar.classList.add('run');
+  }
+
+  // Волна от точки нажатия на кнопке
+  document.addEventListener('pointerdown', function (e) {
+    if (!motionOK) return;
+    var b = e.target.closest('.btn, .chip, .cart-btn');
+    if (!b || b.disabled) return;
+    var r = b.getBoundingClientRect(), s = Math.max(r.width, r.height) * 2.2;
+    var w = document.createElement('span');
+    w.className = 'ripple';
+    w.style.width = w.style.height = s + 'px';
+    w.style.left = (e.clientX - r.left - s / 2) + 'px';
+    w.style.top = (e.clientY - r.top - s / 2) + 'px';
+    b.appendChild(w);
+    setTimeout(function () { w.remove(); }, 700);
+  });
+
+  // Шапка при прокрутке, полоса прочитанного и кнопка «наверх»
+  var topEl = document.querySelector('.top'), readBar = $('read-bar'), upBtn = $('to-top'), ticking = false;
+  function onScroll() {
+    ticking = false;
+    var y = window.scrollY, max = document.documentElement.scrollHeight - window.innerHeight;
+    topEl.classList.toggle('scrolled', y > 8);
+    readBar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, y / max) : 0) + ')';
+    upBtn.classList.toggle('show', y > 700);
+  }
+  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  upBtn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: motionOK ? 'smooth' : 'auto' }); });
+
+  // Ссылка на раздел, который уже открыт, плавно возвращает наверх
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute('href') === location.hash && window.scrollY > 0) {
+      e.preventDefault(); closeMenu();
+      window.scrollTo({ top: 0, behavior: motionOK ? 'smooth' : 'auto' });
+    }
+  });
+
+  // Фото проявляются из размытия, когда загрузятся
+  function fadeImages(root) {
+    if (!motionOK) return;
+    [].forEach.call(root.querySelectorAll('img'), function (img) {
+      if (img.complete || img.dataset.fade) return;
+      img.dataset.fade = '1';
+      img.classList.add('img-wait');
+      var done = function () { img.classList.remove('img-wait'); };
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    });
+  }
+
+  // Сумма в корзине «докручивается» до нового значения
+  var shownSum = 0;
+  function tweenSum(to) {
+    var els = all('[data-cart-sum]'), from = shownSum;
+    shownSum = to;
+    if (!motionOK || from === to) { els.forEach(function (el) { el.textContent = rub(to); }); return; }
+    var t0 = performance.now();
+    (function step(now) {
+      var k = Math.min(1, (now - t0) / 450), v = from + (to - from) * (1 - Math.pow(1 - k, 3));
+      els.forEach(function (el) { el.textContent = rub(v); });
+      if (k < 1 && shownSum === to) requestAnimationFrame(step);
+    })(t0);
+  }
+
   // ---------- разделы сайта ----------
   var PAGES = ['glavnaya', 'o-nas', 'katalog', 'dostavka', 'kontakty', 'oformlenie', 'gotovo'];
-  var first = true;
+  var first = true, routeToken = 0;
   function route() {
     var page = location.hash.replace('#', '');
     if (page === 'oplata') return handlePaymentReturn();
     if (PAGES.indexOf(page) < 0) page = 'glavnaya';
     if (page === 'oformlenie' && !ids().length) page = 'katalog';
+    var curEl = document.querySelector('[data-page]:not([hidden])'), target = $('p-' + page);
+    var token = ++routeToken;
+    closeMenu();
+    // Плавный переход: текущий раздел гаснет, прокрутка уходит наверх, затем появляется новый
+    if (motionOK && !first && curEl && curEl !== target) {
+      progress();
+      if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+      curEl.classList.add('page-out');
+      setTimeout(function () {
+        curEl.classList.remove('page-out');
+        if (token === routeToken) swap(page);
+      }, 260);
+    } else {
+      swap(page);
+    }
+  }
+  function swap(page) {
     var shown;
     all('[data-page]').forEach(function (el) {
       var on = el.dataset.page === page;
@@ -116,8 +202,7 @@
     all('#nav a').forEach(function (a) {
       if (a.getAttribute('href') === '#' + page) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
-    closeMenu();
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'instant' });
     if (page === 'oformlenie') renderSummary();
     var cur = $('p-' + page);
     if (shown && motionOK && !first) {
@@ -125,14 +210,48 @@
     }
     first = false;
     reveal(cur);
+    fadeImages(cur);
+    onScroll();
   }
   window.addEventListener('hashchange', route);
 
-  function closeMenu() { $('nav').classList.remove('open'); $('menu-btn').setAttribute('aria-expanded', 'false'); }
-  $('menu-btn').addEventListener('click', function () {
-    var open = $('nav').classList.toggle('open');
-    this.setAttribute('aria-expanded', open);
+  // ---------- мобильное меню ----------
+  // Панель справа: блокирует прокрутку страницы, закрывается по Esc, по тапу
+  // на затемнение и по выбору пункта; фокус уходит в меню и возвращается на бургер.
+  var desktopMQ = window.matchMedia('(min-width: 1024px)');
+  function lockScroll(on) {
+    document.body.classList.toggle('scroll-lock', on);
+    document.documentElement.style.overflow = on ? 'hidden' : '';
+  }
+  function menuOpen() { return $('nav').classList.contains('open'); }
+  function openMenu() {
+    $('nav').classList.add('open'); $('nav-scrim').classList.add('open');
+    $('menu-btn').setAttribute('aria-expanded', 'true');
+    lockScroll(true);
+    setTimeout(function () { $('nav-close').focus(); }, 50);
+  }
+  function closeMenu(returnFocus) {
+    if (!menuOpen()) return;
+    $('nav').classList.remove('open'); $('nav-scrim').classList.remove('open');
+    $('menu-btn').setAttribute('aria-expanded', 'false');
+    if ($('cart').hidden) lockScroll(false);
+    if (returnFocus) $('menu-btn').focus();
+  }
+  $('menu-btn').addEventListener('click', function () { menuOpen() ? closeMenu(true) : openMenu(); });
+  $('nav-close').addEventListener('click', function () { closeMenu(true); });
+  $('nav-scrim').addEventListener('click', function () { closeMenu(true); });
+  document.addEventListener('keydown', function (e) {
+    if (!menuOpen()) return;
+    if (e.key === 'Escape') return closeMenu(true);
+    // Фокус не уходит из открытого меню
+    if (e.key === 'Tab') {
+      var f = $('nav').querySelectorAll('button, a[href]'), firstEl = f[0], lastEl = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === firstEl) { e.preventDefault(); lastEl.focus(); }
+      else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); firstEl.focus(); }
+    }
   });
+  // При повороте планшета в ширину меню становится обычным, блокировку снимаем
+  desktopMQ.addEventListener('change', function (e) { if (e.matches) closeMenu(false); });
 
   // Плитки сортов на главной открывают каталог с нужным фильтром
   all('[data-grade-link]').forEach(function (a) {
@@ -180,6 +299,7 @@
           '</div>' +
         '</div></article>';
     }).join('');
+    fadeImages(grid);
   }
 
   function stepInput(input, dir) {
@@ -225,7 +345,7 @@
   function renderCart() {
     var list = ids(), sum = total();
     all('[data-cart-count]').forEach(function (el) { el.textContent = list.length; el.dataset.n = list.length; });
-    all('[data-cart-sum]').forEach(function (el) { el.textContent = rub(sum); });
+    tweenSum(sum);
     var box = $('cart-items');
     if (!list.length) {
       box.innerHTML = '<p class="cart-empty">Корзина пуста. Выберите шерсть в <a href="#katalog" data-close-cart>каталоге</a>.</p>';
@@ -243,11 +363,11 @@
     renderSummary();
   }
 
-  function openCart() { $('cart').hidden = false; $('scrim').hidden = false; document.body.classList.add('lock'); $('cart-close').focus(); }
+  function openCart() { closeMenu(false); $('cart').hidden = false; $('scrim').hidden = false; lockScroll(true); $('cart-close').focus(); }
   function closeCart() {
     var c = $('cart'), s = $('scrim');
     if (c.hidden) return;
-    document.body.classList.remove('lock');
+    lockScroll(false);
     if (!motionOK) { c.hidden = true; s.hidden = true; return; }
     c.classList.add('closing'); s.classList.add('closing');
     setTimeout(function () { c.hidden = true; s.hidden = true; c.classList.remove('closing'); s.classList.remove('closing'); }, 280);

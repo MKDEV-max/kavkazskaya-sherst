@@ -1,0 +1,9 @@
+{
+  "name": "Кавказская шерсть",
+  "short_name": "Кавказская шерсть",
+  "start_url": "./",
+  "display": "browser",
+  "background_color": "#F6F4EF",
+  "theme_color": "#16232A",
+  "icons": [{ "src": "assets/logo.webp", "sizes": "1024x1024", "type": "image/webp" }]
+}

@@ -1,0 +1,90 @@
+---
+title: Каталог: мытая шерсть, топс и шерстяная пряжа оптом — Кавказская шерсть
+description: Каталог продукции из шерсти дагестанского мериноса: мытая шерсть для прядения и войлока, топс, пряжа на бобинах, крученая и в пасмах. Характеристики, формат поставки, образцы и КП.
+path: catalog.html
+slug: catalog
+scripts: catalog
+---
+<header class="page-hero on-dark">
+  <div class="container">
+    <nav class="breadcrumbs" aria-label="Хлебные крошки"><ol><li><a href="./">Главная</a></li><li aria-current="page">Каталог</li></ol></nav>
+    <h1>Каталог: мытая шерсть, топс и шерстяная пряжа</h1>
+    <p class="lead">Вся продукция — из шерсти дагестанского мериноса, производство в Республике Дагестан. Цены рассчитываем под объём партии: откройте карточку, чтобы увидеть характеристики, и запросите образец или КП.</p>
+  </div>
+  <svg class="ridge ridge-low" aria-hidden="true" focusable="false"><use href="#ridge-low"/></svg>
+</header>
+
+<section class="section" style="padding-top:var(--space-6)" aria-labelledby="catalog-title">
+  <div class="container catalog-layout">
+    <h2 class="sr-only" id="catalog-title">Позиции каталога</h2>
+    <form class="filters" id="filters" aria-label="Фильтры каталога" onsubmit="return false">
+      <fieldset class="filter-group">
+        <legend>Категория</legend>
+        <div class="chips" id="filter-category"></div>
+      </fieldset>
+      <div id="filter-extra"></div>
+      <div class="results-bar">
+        <p class="results-count" id="results-count" aria-live="polite"></p>
+        <button class="reset-btn" type="button" id="filters-reset" hidden>Сбросить фильтры</button>
+      </div>
+    </form>
+
+    <div class="product-grid" id="product-grid">
+      <noscript><p>Для работы фильтров включите JavaScript. Каталог также доступен по запросу — напишите нам.</p></noscript>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" aria-labelledby="compare-title">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Сравнение</p>
+      <h2 id="compare-title">Характеристики позиций</h2>
+      <p>Указаны подтверждённые параметры. Номер нити, длину штапеля и объём партии согласуем под задачу — укажите требования в заявке.</p>
+    </div>
+    <div id="compare"></div>
+  </div>
+</section>
+
+<section class="section" aria-label="Запрос предложения">
+  <div class="container">
+    <div class="cta-band on-dark">
+      <div>
+        <h2>Не нашли нужную позицию?</h2>
+        <p>Опишите требования к сырью или пряже — подберём вариант и пришлём КП.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-sand" type="button" data-request="kp">Получить КП</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Карточка товара -->
+<dialog class="dialog dialog-wide" id="product-dialog" aria-labelledby="pd-title">
+  <div class="dialog-panel">
+    <div class="dialog-head">
+      <div>
+        <p class="eyebrow" id="pd-cat"></p>
+        <h2 id="pd-title"></h2>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="Закрыть карточку товара"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="pd-grid">
+      <div class="pd-media" id="pd-media"></div>
+      <div class="pd-info">
+        <p id="pd-summary"></p>
+        <h3>Характеристики</h3>
+        <dl class="specs" id="pd-specs"></dl>
+        <h3>Применение</h3>
+        <ul class="checks" id="pd-apps"></ul>
+        <h3>Варианты и документы</h3>
+        <p class="pd-note" id="pd-variants"></p>
+        <div class="pd-actions">
+          <button class="btn btn-primary" type="button" id="pd-kp">Получить КП</button>
+          <button class="btn btn-outline" type="button" id="pd-sample">Запросить образец</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>

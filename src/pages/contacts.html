@@ -1,0 +1,49 @@
+---
+title: Контакты производителя шерсти и пряжи — Кавказская шерсть
+description: Как связаться с «Кавказской шерстью»: заявка на КП и образцы, контакты отдела продаж, производство в Республике Дагестан.
+path: contacts.html
+slug: contacts
+---
+<header class="page-hero on-dark">
+  <div class="container">
+    <nav class="breadcrumbs" aria-label="Хлебные крошки"><ol><li><a href="./">Главная</a></li><li aria-current="page">Контакты</li></ol></nav>
+    <h1>Контакты</h1>
+    <p class="lead">Быстрее всего — оставить заявку: менеджер ответит на email с расчётом стоимости и условиями поставки.</p>
+  </div>
+  <svg class="ridge ridge-low" aria-hidden="true" focusable="false"><use href="#ridge-low"/></svg>
+</header>
+
+<section class="section" aria-labelledby="contact-title">
+  <div class="container grid-2">
+    <div>
+      <div class="section-head" style="margin-bottom:var(--space-5)">
+        <h2 id="contact-title">Отдел продаж</h2>
+        <p>КП, образцы, документы по партии и условия доставки.</p>
+      </div>
+      <dl class="contact-cards" data-contact-cards></dl>
+      <div class="section-foot" style="margin-top:var(--space-5)">
+        <button class="btn btn-primary" type="button" data-request="kp">Получить КП</button>
+        <button class="btn btn-outline" type="button" data-request="sample">Запросить образец</button>
+      </div>
+    </div>
+    <div>
+      <div class="section-head" style="margin-bottom:var(--space-5)">
+        <h2>Производство</h2>
+      </div>
+      <dl class="requisites">
+        <dt>Регион</dt><dd data-company="region">Республика Дагестан</dd>
+        <dt data-if-company="productionAddress" hidden>Адрес производства</dt><dd data-if-company="productionAddress" hidden data-company="productionAddress"></dd>
+        <dt data-if="workHours" hidden>Режим работы</dt><dd data-if="workHours" hidden data-contact="workHours"></dd>
+      </dl>
+      <div data-requisites-block hidden>
+        <h2 style="font-size:var(--font-size-xl); margin:var(--space-7) 0 var(--space-4)">Реквизиты</h2>
+        <dl class="requisites">
+          <dt data-if-company="legalName" hidden>Организация</dt><dd data-if-company="legalName" hidden data-company="legalName"></dd>
+          <dt data-if-company="inn" hidden>ИНН</dt><dd data-if-company="inn" hidden data-company="inn" class="num"></dd>
+          <dt data-if-company="ogrn" hidden data-company="ogrnLabel"></dt><dd data-if-company="ogrn" hidden data-company="ogrn" class="num"></dd>
+          <dt data-if-company="legalAddress" hidden>Юридический адрес</dt><dd data-if-company="legalAddress" hidden data-company="legalAddress"></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>

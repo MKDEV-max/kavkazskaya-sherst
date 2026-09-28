@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>document.documentElement.classList.add('js')</script>
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+{{base}}<link rel="canonical" href="{{canonical}}">
+<meta name="robots" content="{{robots}}">
+<meta name="theme-color" content="#16232A">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:site_name" content="Кавказская шерсть">
+<meta property="og:title" content="{{title}}">
+<meta property="og:description" content="{{description}}">
+<meta property="og:url" content="{{canonical}}">
+<meta property="og:image" content="{{site}}assets/logo.webp">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/logo.webp" type="image/webp">
+<link rel="apple-touch-icon" href="assets/logo.webp">
+<link rel="manifest" href="site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Merriweather:wght@700&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Organization","name":"Кавказская шерсть","url":"{{site}}","logo":"{{site}}assets/logo.webp","description":"Производство и поставки мытой шерсти, топса и шерстяной пряжи из шерсти дагестанского мериноса.","address":{"@type":"PostalAddress","addressRegion":"Республика Дагестан","addressCountry":"RU"}}
+</script>
+</head>
+<body data-page="{{slug}}">
+<a class="skip-link" href="#main">Перейти к содержанию</a>
+{{icons}}
+{{header}}
+<main id="main" tabindex="-1">
+{{content}}
+</main>
+{{footer}}
+{{dialogs}}
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/site.js"></script>
+{{scripts}}
+</body>
+</html>

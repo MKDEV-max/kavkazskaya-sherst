@@ -1,0 +1,27 @@
+<header class="site-header" id="top">
+  <div class="container header-inner">
+    <a class="logo" href="./" aria-label="Кавказская шерсть — на главную">
+      <span class="logo-mark"><img src="assets/logo.webp" width="1024" height="1024" alt="" decoding="async"></span>
+      <span class="logo-text"><span class="logo-name">Кавказская шерсть</span><span class="logo-sub">шерсть и пряжа · Дагестан</span></span>
+    </a>
+    <nav class="site-nav" id="site-nav" aria-label="Основная навигация">
+      <ul class="nav-list">
+        <li><a href="about.html"{{cur_about}}>О производстве</a></li>
+        <li><a href="catalog.html"{{cur_catalog}}>Каталог</a></li>
+        <li><a href="delivery.html"{{cur_delivery}}>Оплата и доставка</a></li>
+        <li><a href="contacts.html"{{cur_contacts}}>Контакты</a></li>
+      </ul>
+      <div class="nav-contacts" data-if-any="phone email">
+        <a data-contact="phone" hidden></a>
+        <a data-contact="email" hidden></a>
+      </div>
+    </nav>
+    <a class="header-phone" data-contact="phone" hidden></a>
+    <button class="btn btn-primary btn-sm header-cta" type="button" data-request="kp" aria-label="Получить коммерческое предложение">
+      <svg aria-hidden="true"><use href="#i-mail"/></svg><span class="btn-label">Получить КП</span>
+    </button>
+    <button class="icon-btn menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Открыть меню">
+      <span class="bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+  </div>
+</header>

@@ -1,85 +1,137 @@
-// Ассортимент: три направления.
-//   washed — мытая шерсть высшей очистки
-//   tops   — чесаная шерсть (топс, лента)
-//   yarn   — натуральная пряжа из собственного мытого сырья
-// Цены не публикуются: стоимость рассчитывает менеджер под объём партии.
-//
-// Пряжа: номера (Nm), метраж и форматы — ПРИМЕРНЫЕ. Замените на свою линейку.
-//   Nm 32/2 = две нити по Nm 32, скручены; Tex одной нити = 1000 / Nm.
-//   Метраж на 100 г = Nm / сложение × 100.
-// Фото пряжи — с Unsplash (бесплатная лицензия), грузятся по прямой ссылке.
-//   Если фото не загрузилось, карточка показывает векторную иллюстрацию.
-//   Свои фото: положите файл в assets/photos и укажите photo: 'assets/photos/имя.jpg'.
+/*
+ * Каталог «Кавказская шерсть».
+ *
+ * Правило: указываются только известные характеристики. Неизвестное значение — null:
+ * строка характеристики и фильтр по ней на сайте просто не показываются.
+ * Фильтры каталога строятся автоматически: группа фильтра появляется, когда у товаров
+ * категории есть хотя бы два разных значения (например, два номера пряжи).
+ *
+ * Сейчас заполнено только то, что подтверждено владельцем:
+ *   сырьё — 100% шерсть дагестанского мериноса, Республика Дагестан; тонина 19–23 мкм;
+ *   пряжа — бобины 1–2 кг, пасмы, мешки/коробки; натуральный белый, крашение под партию.
+ * Добавьте номера пряжи (Nm), сложения, длину штапеля, минимальные партии — фильтры появятся сами.
+ *
+ * photo.stock = true — иллюстративное фото с фотостока: на карточке будет пометка «Иллюстрация».
+ * Замените на реальное фото продукции: { src: 'assets/photos/имя.jpg', alt: '…', stock: false }.
+ */
 (function (root) {
-  var GRADES = {
-    fine:       { name: 'Тонкая',     q: 4 },
-    semifine:   { name: 'Полутонкая', q: 3 },
-    semicoarse: { name: 'Полугрубая', q: 2 },
-    coarse:     { name: 'Грубая',     q: 1 }
-  };
   var CATEGORIES = {
-    washed: { name: 'Мытая шерсть',            short: 'Мытая шерсть' },
-    yarn:   { name: 'Шерстяная пряжа',         short: 'Пряжа' },
-    tops:   { name: 'Чесаная шерсть / Топс',   short: 'Топс' }
+    wool: { name: 'Мытая шерсть', plural: 'Мытая шерсть', lead: 'Мытая шерсть дагестанского мериноса — сырьё для прядения, трикотажа, текстиля и войлока.' },
+    tops: { name: 'Топс', plural: 'Топс (гребенная лента)', lead: 'Гребенная лента: волокна расчёсаны и уложены параллельно — готова к прядению.' },
+    yarn: { name: 'Пряжа', plural: 'Шерстяная пряжа', lead: 'Натуральная пряжа из собственной мытой шерсти, без синтетических примесей.' }
   };
-  var YARN_TYPES = {
-    cone:  'Бобинная для машинной вязки',
-    plied: 'Крученая пряжа',
-    hank:  'Пряжа в пасмах'
-  };
+
+  var ORIGIN = 'Республика Дагестан';
+  var COMPOSITION = '100% шерсть дагестанского мериноса';
 
   var PRODUCTS = [
-    // --- Мытая шерсть
-    { id: 'fine-washed',     cat: 'washed', grade: 'fine',       color: 'Белая',  breed: 'Ставропольская', micron: '20–23 мкм', use: 'пряжа, трикотаж, тонкие ткани' },
-    { id: 'semifine-washed', cat: 'washed', grade: 'semifine',   color: 'Белая',  breed: 'Цигайская',      micron: '27–31 мкм', use: 'костюмные ткани, пряжа' },
-    { id: 'semic-washed',    cat: 'washed', grade: 'semicoarse', color: 'Серая',  breed: 'Тушинская',      micron: 'смешанная', use: 'ковры, пряжа ручного прядения' },
-    { id: 'coarse-washed',   cat: 'washed', grade: 'coarse',     color: 'Чёрная', breed: 'Карачаевская',   micron: 'смешанная', use: 'войлок, валенки, бурки' },
-
-    // --- Пряжа
-    { id: 'yarn-cone-32', cat: 'yarn', type: 'cone', grade: 'fine', title: 'Пряжа Nm 32/2 на бобинах', photo: '1575052734309-6008d800b7dc', weight: 'бобина 1,5 кг',
-      nm: 'Nm 32/2', tex: '31 Tex × 2', meters: '1600 м / 100 г',
-      pack: 'бобины 1–2 кг, коробки по 20–25 кг', colors: ['#EFE9DC', '#9A9F9B'], colorNames: 'суровый белый, серый',
-      use: 'трикотаж, носочное производство' },
-    { id: 'yarn-cone-20', cat: 'yarn', type: 'cone', grade: 'semifine', title: 'Пряжа Nm 20/2 на бобинах, меланж', photo: '1719859065270-e6f231f38dd8', weight: 'бобина 2 кг',
-      nm: 'Nm 20/2', tex: '50 Tex × 2', meters: '1000 м / 100 г',
-      pack: 'бобины 1–2 кг, коробки по 20–25 кг', colors: ['#EFE9DC', '#9A9F9B', '#4A3B32'], colorNames: 'суровый белый, серый, тёмно-коричневый',
-      use: 'трикотаж, ткачество' },
-    { id: 'yarn-plied-8', cat: 'yarn', type: 'plied', grade: 'semicoarse', title: 'Крученая пряжа Nm 8/3', photo: '1598871956222-26b66d6559fe', weight: 'бобина 2 кг',
-      nm: 'Nm 8/3', tex: '125 Tex × 3', meters: '267 м / 100 г',
-      pack: 'бобины 2 кг, мешки по 25 кг', colors: ['#9A9F9B', '#4A3B32'], colorNames: 'серый, тёмно-коричневый',
-      use: 'ковроткачество, плотный трикотаж' },
-    { id: 'yarn-hank-4', cat: 'yarn', type: 'hank', grade: 'semicoarse', title: 'Ковровая пряжа Nm 4/2 в пасмах', photo: '1695898342114-bd8a65060b5c', weight: 'пасма 0,5–1 кг',
-      nm: 'Nm 4/2', tex: '250 Tex × 2', meters: '200 м / 100 г',
-      pack: 'пасмы 0,5–1 кг, мешки по 25 кг', colors: ['#EFE9DC', '#9A9F9B', '#4A3B32'], colorNames: 'суровый белый, серый, тёмно-коричневый',
-      use: 'ковроткачество, ремесленные цеха' },
-    { id: 'yarn-hank-12', cat: 'yarn', type: 'hank', grade: 'fine', title: 'Пряжа Nm 12/2 в пасмах', photo: '1670764732085-ebedbd8d7e7c', weight: 'пасма 100 г или 0,5 кг',
-      nm: 'Nm 12/2', tex: '83 Tex × 2', meters: '600 м / 100 г',
-      pack: 'пасмы 100 г и 0,5 кг, коробки', colors: ['#EFE9DC', '#9A9F9B'], colorNames: 'суровый белый, серый',
-      use: 'ручное вязание, ткачество, трикотажные бренды' },
-
-    // --- Топс
-    { id: 'fine-combed',     cat: 'tops', grade: 'fine',       color: 'Белая',  breed: 'Кавказская тонкорунная', micron: '21–23 мкм', use: 'прядение, мокрое валяние' },
-    { id: 'semifine-combed', cat: 'tops', grade: 'semifine',   color: 'Белая',  breed: 'Цигайская',              micron: '27–31 мкм', use: 'пряжа, валяние' },
-    { id: 'semic-combed',    cat: 'tops', grade: 'semicoarse', color: 'Серая',  breed: 'Тушинская',              micron: 'смешанная', use: 'войлок, валяние' },
-    { id: 'coarse-combed',   cat: 'tops', grade: 'coarse',     color: 'Чёрная', breed: 'Андийская',              micron: 'смешанная', use: 'валяние, бурки, утеплитель' }
+    {
+      id: 'myitaya-sherst-merinosa',
+      cat: 'wool',
+      name: 'Мытая шерсть дагестанского мериноса',
+      summary: 'Тонкорунная шерсть после промышленной мойки: чистый природный белый цвет, мягкое извитое волокно.',
+      grade: 'Тонкорунная',
+      composition: COMPOSITION,
+      origin: ORIGIN,
+      micron: '19–23 мкм',
+      staple: null,          // длина штапеля, напр.: '6–8 см'
+      color: 'Натуральный белый',
+      format: 'Мешки',
+      packaging: null,       // напр.: 'мешки по 25 кг'
+      unit: 'кг',
+      minOrder: null,        // напр.: 'от 50 кг'
+      applications: ['прядение', 'трикотажная пряжа', 'премиальный текстиль', 'валяние и войлок'],
+      variants: 'Тонину и объём партии подбираем под задачу — укажите требования в заявке.',
+      photo: { src: 'assets/photos/semifine-washed.jpg', w: 800, h: 600, alt: 'Мытая белая шерсть крупным планом', stock: true }
+    },
+    {
+      id: 'tops-merinosa',
+      cat: 'tops',
+      name: 'Топс из шерсти дагестанского мериноса',
+      summary: 'Гребенная лента из мытой шерсти мериноса: волокна выровнены и уложены параллельно.',
+      grade: 'Тонкорунная',
+      composition: COMPOSITION,
+      origin: ORIGIN,
+      micron: '19–23 мкм',
+      staple: null,          // средняя длина волокна в ленте
+      color: 'Натуральный белый',
+      format: 'Лента',
+      packaging: null,
+      unit: 'кг',
+      minOrder: null,
+      applications: ['гребенное прядение', 'валяние'],
+      variants: 'Параметры ленты и объём партии согласуем под ваше оборудование.',
+      photo: { src: 'assets/photos/semifine-combed.jpg', w: 800, h: 600, alt: 'Белая гребенная лента из шерсти', stock: true }
+    },
+    {
+      id: 'pryazha-na-bobinah',
+      cat: 'yarn',
+      name: 'Пряжа на бобинах для машинной вязки',
+      summary: 'Пряжа из мытой шерсти дагестанского мериноса, намотка на бобины для вязального оборудования.',
+      grade: null,
+      composition: COMPOSITION,
+      origin: ORIGIN,
+      micron: '19–23 мкм',
+      nm: null,              // номер пряжи, напр.: 'Nm 32/2'
+      ply: null,             // число сложений, напр.: '2'
+      tex: null,
+      meterage: null,        // напр.: '1600 м / 100 г'
+      color: 'Натуральный белый; крашение под партию',
+      format: 'Бобины',
+      packaging: 'бобины 1–2 кг; оптом — мешки или коробки',
+      unit: 'кг',
+      minOrder: null,
+      applications: ['трикотаж', 'носочное производство'],
+      variants: 'Номер нити (Nm/Tex), число сложений и цвет согласуем под задачу.',
+      photo: { src: 'https://images.unsplash.com/photo-1575052734309-6008d800b7dc?auto=format&fit=crop&w=800&h=600&q=75', w: 800, h: 600, alt: 'Бобины светлой пряжи', stock: true }
+    },
+    {
+      id: 'kruchenaya-pryazha',
+      cat: 'yarn',
+      name: 'Крученая пряжа',
+      summary: 'Пряжа из нескольких скрученных нитей — плотная и прочная, для ткачества и плотного трикотажа.',
+      grade: null,
+      composition: COMPOSITION,
+      origin: ORIGIN,
+      micron: '19–23 мкм',
+      nm: null,
+      ply: null,
+      tex: null,
+      meterage: null,
+      color: 'Натуральный белый; крашение под партию',
+      format: 'Бобины',
+      packaging: 'бобины 1–2 кг; оптом — мешки или коробки',
+      unit: 'кг',
+      minOrder: null,
+      applications: ['ткачество', 'плотный трикотаж', 'ковроткачество'],
+      variants: 'Номер нити, число сложений и крутку согласуем под задачу.',
+      photo: { src: 'https://images.unsplash.com/photo-1598871956222-26b66d6559fe?auto=format&fit=crop&w=800&h=600&q=75', w: 800, h: 600, alt: 'Мотки натуральной шерстяной пряжи', stock: true }
+    },
+    {
+      id: 'pryazha-v-pasmah',
+      cat: 'yarn',
+      name: 'Пряжа в пасмах',
+      summary: 'Пряжа в пасмах (мотках) — для ткачества, ковроткачества и ручных производств.',
+      grade: null,
+      composition: COMPOSITION,
+      origin: ORIGIN,
+      micron: '19–23 мкм',
+      nm: null,
+      ply: null,
+      tex: null,
+      meterage: null,
+      color: 'Натуральный белый; крашение под партию',
+      format: 'Пасмы',
+      packaging: 'пасмы; оптом — мешки или коробки',
+      unit: 'кг',
+      minOrder: null,
+      applications: ['ткачество', 'ковроткачество', 'ручное вязание', 'ремесленные цеха'],
+      variants: 'Номер нити и вес пасмы согласуем под задачу.',
+      photo: { src: 'https://images.unsplash.com/photo-1695898342114-bd8a65060b5c?auto=format&fit=crop&w=800&h=600&q=75', w: 800, h: 600, alt: 'Неокрашенные пасмы пряжи', stock: true }
+    }
   ];
 
-  // Ссылка на фото Unsplash с оптимизацией (формат, кадрирование, ширина)
-  function unsplash(id, w) { return 'https://images.unsplash.com/photo-' + id + '?auto=format&fit=crop&w=' + w + '&q=80'; }
-
-  // «Тонкость» для сортировки: пряжа — по метражу, шерсть и топс — по сорту
-  PRODUCTS.forEach(function (p) {
-    p.fineness = p.cat === 'yarn' ? parseInt(p.meters, 10) / 400 : GRADES[p.grade].q;
-    if (p.cat === 'yarn') {
-      p.name = p.title; p.typeName = YARN_TYPES[p.type];
-      if (p.photo && p.photo.indexOf('/') < 0) { p.img = unsplash(p.photo, 800); p.img400 = unsplash(p.photo, 400); }
-      else if (p.photo) { p.img = p.img400 = p.photo; }
-      return;
-    }
-    p.name = GRADES[p.grade].name + (p.cat === 'tops' ? ' шерсть, топс (лента)' : ' шерсть, мытая');
-  });
-
-  var data = { PRODUCTS: PRODUCTS, GRADES: GRADES, CATEGORIES: CATEGORIES, YARN_TYPES: YARN_TYPES };
+  var data = { CATEGORIES: CATEGORIES, PRODUCTS: PRODUCTS };
   if (typeof module !== 'undefined' && module.exports) module.exports = data;
   else root.SHOP_DATA = data;
 })(this);

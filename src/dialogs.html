@@ -1,0 +1,105 @@
+<!-- Заявка: КП или образец -->
+<dialog class="dialog" id="request-dialog" aria-labelledby="request-title">
+  <div class="dialog-panel">
+    <div class="dialog-head">
+      <div>
+        <p class="eyebrow" id="request-eyebrow">Заявка</p>
+        <h2 id="request-title">Получить коммерческое предложение</h2>
+      </div>
+      <button class="icon-btn" type="button" data-close aria-label="Закрыть окно заявки"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+
+    <form id="request-form" novalidate>
+      <p class="form-intro" id="request-intro">Менеджер рассчитает стоимость под ваш объём и пришлёт КП и счёт на email. Оплата — по безналичному расчёту.</p>
+      <div class="form-grid">
+        <fieldset class="segmented full" id="f-type">
+          <legend>Что вам нужно</legend>
+          <label><input type="radio" name="type" value="kp" checked><span>Коммерческое предложение</span></label>
+          <label><input type="radio" name="type" value="sample"><span>Образец</span></label>
+          <label><input type="radio" name="type" value="both"><span>КП и образец</span></label>
+        </fieldset>
+
+        <div class="field">
+          <label for="f-category">Направление <span class="opt">(необязательно)</span></label>
+          <select class="select" id="f-category" name="category">
+            <option value="">Не знаю — нужна консультация</option>
+            <option value="wool">Мытая шерсть</option>
+            <option value="tops">Топс</option>
+            <option value="yarn">Пряжа</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-product">Позиция <span class="opt">(необязательно)</span></label>
+          <select class="select" id="f-product" name="product"></select>
+        </div>
+
+        <div class="yarn-extra full" id="f-yarn" hidden>
+          <div class="field">
+            <label for="f-count">Номер нити <span class="opt">(необязательно)</span></label>
+            <input class="input" id="f-count" name="count" type="text" placeholder="Например, Nm 32/2 или 62 Tex" aria-describedby="f-count-hint">
+            <span class="hint" id="f-count-hint">Nm — метрический номер, Tex — масса 1000 м нити в граммах</span>
+          </div>
+          <div class="field">
+            <label for="f-format">Формат <span class="opt">(необязательно)</span></label>
+            <select class="select" id="f-format" name="format"><option value="">Не важно</option><option>Бобины</option><option>Пасмы</option></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-volume">Объём партии <span class="req" data-volume-req>*</span><span class="opt" data-volume-opt hidden>(необязательно)</span></label>
+          <div class="volume">
+            <input class="input" id="f-volume" name="volume" type="text" inputmode="decimal" autocomplete="off" placeholder="Например, 500" aria-describedby="f-volume-error">
+            <select class="select" id="f-unit" name="unit" aria-label="Единица объёма"><option value="кг">кг</option><option value="т">т</option></select>
+          </div>
+          <span class="error" id="f-volume-error" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="f-name">Компания или имя <span class="req">*</span></label>
+          <input class="input" id="f-name" name="name" type="text" autocomplete="organization" placeholder="ООО «Текстиль» или Иван Петров" aria-describedby="f-name-error" required>
+          <span class="error" id="f-name-error" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="f-email">Рабочий email <span class="req">*</span></label>
+          <input class="input" id="f-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="zakupki@company.ru" aria-describedby="f-email-hint f-email-error" required>
+          <span class="hint" id="f-email-hint">На этот адрес придут КП и счёт</span>
+          <span class="error" id="f-email-error" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="f-phone">Телефон <span class="req">*</span></label>
+          <input class="input" id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 900 123-45-67" aria-describedby="f-phone-error" required>
+          <span class="error" id="f-phone-error" aria-live="polite"></span>
+        </div>
+        <div class="field full">
+          <label for="f-comment">Комментарий или реквизиты <span class="opt">(необязательно)</span></label>
+          <textarea class="textarea" id="f-comment" name="comment" rows="3" placeholder="ИНН, город доставки, сроки, требования к партии и документам"></textarea>
+        </div>
+        <!-- Ловушка для спам-ботов: скрыта от людей и программ экранного доступа -->
+        <div class="sr-only" aria-hidden="true"><label>Не заполняйте это поле<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+        <div class="field full">
+          <label class="check"><input id="f-consent" name="consent" type="checkbox" aria-describedby="f-consent-error" required> <span>Согласен на обработку персональных данных по <a href="privacy.html" target="_blank" rel="noopener">политике конфиденциальности</a> <span class="req">*</span></span></label>
+          <span class="error" id="f-consent-error" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="form-submit">
+        <div class="alert alert-error" id="form-error" role="alert" hidden></div>
+        <button class="btn btn-primary btn-block" id="f-submit" type="submit"><span class="spinner" aria-hidden="true"></span><span class="btn-label">Отправить заявку</span></button>
+        <p class="privacy-note" id="privacy-note">Данные нужны только для ответа на заявку. Куда они передаются — в <a href="privacy.html" target="_blank" rel="noopener">политике</a>.</p>
+      </div>
+    </form>
+
+    <div class="result" id="request-result" hidden tabindex="-1">
+      <svg class="result-icon" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>
+      <h3 id="result-title"></h3>
+      <p id="result-text"></p>
+      <div class="channels" id="result-channels" hidden></div>
+      <div class="field" id="result-copy" hidden style="width:100%">
+        <label for="result-request-text">Текст заявки</label>
+        <textarea class="textarea request-text" id="result-request-text" readonly></textarea>
+        <button class="btn btn-outline" type="button" id="result-copy-btn">Скопировать текст заявки</button>
+      </div>
+      <button class="btn btn-primary" type="button" data-close>Закрыть</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>

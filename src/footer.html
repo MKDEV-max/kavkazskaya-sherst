@@ -1,0 +1,50 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="logo" href="./" aria-label="Кавказская шерсть — на главную">
+          <span class="logo-mark"><img src="assets/logo.webp" width="1024" height="1024" alt="" loading="lazy" decoding="async"></span>
+          <span class="logo-text"><span class="logo-name">Кавказская шерсть</span><span class="logo-sub">шерсть и пряжа · Дагестан</span></span>
+        </a>
+        <p>Мытая шерсть, топс и шерстяная пряжа из шерсти дагестанского мериноса. Производство — Республика Дагестан. Поставки для текстильных, трикотажных и ковровых производств по всей России.</p>
+        <button class="btn btn-sand btn-sm" type="button" data-request="kp" style="justify-self:start">Связаться с нами</button>
+      </div>
+      <nav aria-label="Разделы сайта">
+        <h2>Разделы</h2>
+        <ul class="footer-list">
+          <li><a href="./">Главная</a></li>
+          <li><a href="catalog.html">Каталог</a></li>
+          <li><a href="about.html">О производстве</a></li>
+          <li><a href="delivery.html">Оплата и доставка</a></li>
+          <li><a href="contacts.html">Контакты</a></li>
+        </ul>
+      </nav>
+      <div>
+        <h2>Контакты</h2>
+        <ul class="footer-list">
+          <li data-if="phone" hidden><a data-contact="phone"></a></li>
+          <li data-if="email" hidden><a data-contact="email"></a></li>
+          <li data-if="whatsapp" hidden><a data-contact="whatsapp"></a></li>
+          <li data-if="telegram" hidden><a data-contact="telegram"></a></li>
+          <li data-if="workHours" hidden><span data-contact="workHours"></span></li>
+          <li>Производство: <span data-company="region">Республика Дагестан</span></li>
+          <li data-if-company="productionAddress" hidden><span data-company="productionAddress"></span></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Документы</h2>
+        <ul class="footer-list">
+          <li><a href="privacy.html">Политика обработки персональных данных</a></li>
+          <li><a href="privacy.html#consent">Согласие на обработку данных</a></li>
+          <li data-if-company="legalName" hidden><span data-company="legalName"></span></li>
+          <li data-if-company="inn" hidden>ИНН&nbsp;<span data-company="inn"></span></li>
+          <li data-if-company="ogrn" hidden><span data-company="ogrnLabel"></span>&nbsp;<span data-company="ogrn"></span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-legal">
+      <span>© <span data-year>2026</span> «Кавказская шерсть»</span>
+      <span>Цены — по запросу. Информация на сайте не является публичной офертой.</span>
+    </div>
+  </div>
+</footer>

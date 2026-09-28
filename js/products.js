@@ -1,34 +1,72 @@
-// Ассортимент магазина. Этот файл читают и сайт, и сервер оплаты,
-// поэтому цена в заказе всегда считается по нему, а не по данным из браузера.
+// Ассортимент: три направления.
+//   washed — мытая шерсть высшей очистки
+//   tops   — чесаная шерсть (топс, лента)
+//   yarn   — натуральная пряжа из собственного мытого сырья
+// Цены не публикуются: стоимость рассчитывает менеджер под объём партии.
 //
-// ВНИМАНИЕ: цены ниже — примерные. Замените их на свои перед запуском.
-//   price  — цена за 1 кг, ₽
-//   min    — минимальный заказ, кг
-//   step   — шаг количества, кг
+// Пряжа: номера (Nm), метраж и форматы — ПРИМЕРНЫЕ. Замените на свою линейку.
+//   Nm 32/2 = две нити по Nm 32, скручены; Tex одной нити = 1000 / Nm.
+//   Метраж на 100 г = Nm / сложение × 100.
 (function (root) {
-  var PRODUCTS = [
-    { id: 'fine-washed',     grade: 'fine',       state: 'Мытая',   color: 'Белая',  breed: 'Ставропольская',                 micron: '20–23 мкм',   use: 'пряжа, трикотаж, тонкие ткани',  price: 900,  min: 1,  step: 1 },
-    { id: 'fine-raw',        grade: 'fine',       state: 'Немытая', color: 'Белая',  breed: 'Грозненская',                    micron: '21–25 мкм',   use: 'для своей мойки и переработки',  price: 350,  min: 10, step: 5 },
-    { id: 'fine-combed',     grade: 'fine',       state: 'Чёсаная', color: 'Белая',  breed: 'Кавказская тонкорунная',         micron: '21–23 мкм',   use: 'прядение, мокрое валяние',       price: 1800, min: 1,  step: 1 },
-    { id: 'semifine-washed', grade: 'semifine',   state: 'Мытая',   color: 'Белая',  breed: 'Цигайская',                      micron: '27–31 мкм',   use: 'костюмные ткани, пряжа',         price: 650,  min: 1,  step: 1 },
-    { id: 'semifine-raw',    grade: 'semifine',   state: 'Немытая', color: 'Белая',  breed: 'Северокавказская мясо-шерстная', micron: '25–31 мкм',   use: 'для своей мойки и переработки',  price: 250,  min: 10, step: 5 },
-    { id: 'semifine-combed', grade: 'semifine',   state: 'Чёсаная', color: 'Белая',  breed: 'Цигайская',                      micron: '27–31 мкм',   use: 'пряжа, валяние',                 price: 1200, min: 1,  step: 1 },
-    { id: 'semic-washed',    grade: 'semicoarse', state: 'Мытая',   color: 'Серая',  breed: 'Тушинская',                      micron: 'неоднородная', use: 'ковры, пряжа ручного прядения', price: 400,  min: 1,  step: 1 },
-    { id: 'semic-raw',       grade: 'semicoarse', state: 'Немытая', color: 'Белая',  breed: 'Тушинская',                      micron: 'неоднородная', use: 'ковры, войлок',                 price: 120,  min: 10, step: 5 },
-    { id: 'semic-combed',    grade: 'semicoarse', state: 'Чёсаная', color: 'Серая',  breed: 'Тушинская',                      micron: 'неоднородная', use: 'войлок, валяние',               price: 800,  min: 1,  step: 1 },
-    { id: 'coarse-washed',   grade: 'coarse',     state: 'Мытая',   color: 'Чёрная', breed: 'Карачаевская',                   micron: 'неоднородная', use: 'войлок, валенки, бурки',        price: 250,  min: 1,  step: 1 },
-    { id: 'coarse-raw',      grade: 'coarse',     state: 'Немытая', color: 'Серая',  breed: 'Лезгинская',                     micron: 'неоднородная', use: 'войлок, утеплитель',            price: 60,   min: 10, step: 5 },
-    { id: 'coarse-combed',   grade: 'coarse',     state: 'Чёсаная', color: 'Чёрная', breed: 'Андийская',                      micron: 'неоднородная', use: 'валяние, бурки',                price: 600,  min: 1,  step: 1 }
-  ];
   var GRADES = {
     fine:       { name: 'Тонкая',     q: 4 },
     semifine:   { name: 'Полутонкая', q: 3 },
     semicoarse: { name: 'Полугрубая', q: 2 },
     coarse:     { name: 'Грубая',     q: 1 }
   };
-  PRODUCTS.forEach(function (p) { p.name = GRADES[p.grade].name + ' шерсть, ' + p.state.toLowerCase(); });
+  var CATEGORIES = {
+    washed: { name: 'Мытая шерсть',            short: 'Мытая шерсть' },
+    yarn:   { name: 'Шерстяная пряжа',         short: 'Пряжа' },
+    tops:   { name: 'Чесаная шерсть / Топс',   short: 'Топс' }
+  };
+  var YARN_TYPES = {
+    cone:  'Бобинная для машинной вязки',
+    plied: 'Крученая пряжа',
+    hank:  'Пряжа в пасмах'
+  };
 
-  var data = { PRODUCTS: PRODUCTS, GRADES: GRADES };
+  var PRODUCTS = [
+    // --- Мытая шерсть
+    { id: 'fine-washed',     cat: 'washed', grade: 'fine',       color: 'Белая',  breed: 'Ставропольская', micron: '20–23 мкм', use: 'пряжа, трикотаж, тонкие ткани' },
+    { id: 'semifine-washed', cat: 'washed', grade: 'semifine',   color: 'Белая',  breed: 'Цигайская',      micron: '27–31 мкм', use: 'костюмные ткани, пряжа' },
+    { id: 'semic-washed',    cat: 'washed', grade: 'semicoarse', color: 'Серая',  breed: 'Тушинская',      micron: 'смешанная', use: 'ковры, пряжа ручного прядения' },
+    { id: 'coarse-washed',   cat: 'washed', grade: 'coarse',     color: 'Чёрная', breed: 'Карачаевская',   micron: 'смешанная', use: 'войлок, валенки, бурки' },
+
+    // --- Пряжа
+    { id: 'yarn-cone-32', cat: 'yarn', type: 'cone', grade: 'fine', title: 'Пряжа Nm 32/2 на бобинах',
+      nm: 'Nm 32/2', tex: '31 Tex × 2', meters: '1600 м / 100 г',
+      pack: 'бобины 1–2 кг, коробки по 20–25 кг', colors: ['#EFE9DC', '#9A9F9B'], colorNames: 'суровый белый, серый',
+      use: 'трикотаж, носочное производство' },
+    { id: 'yarn-cone-20', cat: 'yarn', type: 'cone', grade: 'semifine', title: 'Пряжа Nm 20/2 на бобинах',
+      nm: 'Nm 20/2', tex: '50 Tex × 2', meters: '1000 м / 100 г',
+      pack: 'бобины 1–2 кг, коробки по 20–25 кг', colors: ['#EFE9DC', '#9A9F9B', '#4A3B32'], colorNames: 'суровый белый, серый, тёмно-коричневый',
+      use: 'трикотаж, ткачество' },
+    { id: 'yarn-plied-8', cat: 'yarn', type: 'plied', grade: 'semicoarse', title: 'Крученая пряжа Nm 8/3',
+      nm: 'Nm 8/3', tex: '125 Tex × 3', meters: '267 м / 100 г',
+      pack: 'бобины 2 кг, мешки по 25 кг', colors: ['#9A9F9B', '#4A3B32'], colorNames: 'серый, тёмно-коричневый',
+      use: 'ковроткачество, плотный трикотаж' },
+    { id: 'yarn-hank-4', cat: 'yarn', type: 'hank', grade: 'semicoarse', title: 'Ковровая пряжа Nm 4/2 в пасмах',
+      nm: 'Nm 4/2', tex: '250 Tex × 2', meters: '200 м / 100 г',
+      pack: 'пасмы 0,5–1 кг, мешки по 25 кг', colors: ['#EFE9DC', '#9A9F9B', '#4A3B32'], colorNames: 'суровый белый, серый, тёмно-коричневый',
+      use: 'ковроткачество, ремесленные цеха' },
+    { id: 'yarn-hank-12', cat: 'yarn', type: 'hank', grade: 'fine', title: 'Пряжа Nm 12/2 в пасмах',
+      nm: 'Nm 12/2', tex: '83 Tex × 2', meters: '600 м / 100 г',
+      pack: 'пасмы 100 г и 0,5 кг, коробки', colors: ['#EFE9DC', '#9A9F9B'], colorNames: 'суровый белый, серый',
+      use: 'ручное вязание, ткачество, трикотажные бренды' },
+
+    // --- Топс
+    { id: 'fine-combed',     cat: 'tops', grade: 'fine',       color: 'Белая',  breed: 'Кавказская тонкорунная', micron: '21–23 мкм', use: 'прядение, мокрое валяние' },
+    { id: 'semifine-combed', cat: 'tops', grade: 'semifine',   color: 'Белая',  breed: 'Цигайская',              micron: '27–31 мкм', use: 'пряжа, валяние' },
+    { id: 'semic-combed',    cat: 'tops', grade: 'semicoarse', color: 'Серая',  breed: 'Тушинская',              micron: 'смешанная', use: 'войлок, валяние' },
+    { id: 'coarse-combed',   cat: 'tops', grade: 'coarse',     color: 'Чёрная', breed: 'Андийская',              micron: 'смешанная', use: 'валяние, бурки, утеплитель' }
+  ];
+
+  PRODUCTS.forEach(function (p) {
+    if (p.cat === 'yarn') { p.name = p.title; p.typeName = YARN_TYPES[p.type]; return; }
+    p.name = GRADES[p.grade].name + (p.cat === 'tops' ? ' шерсть, топс (лента)' : ' шерсть, мытая');
+  });
+
+  var data = { PRODUCTS: PRODUCTS, GRADES: GRADES, CATEGORIES: CATEGORIES, YARN_TYPES: YARN_TYPES };
   if (typeof module !== 'undefined' && module.exports) module.exports = data;
   else root.SHOP_DATA = data;
 })(this);

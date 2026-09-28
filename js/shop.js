@@ -1,55 +1,86 @@
-// Магазин: разделы сайта, каталог, корзина, оформление и оплата
+// Сайт: разделы, каталог (мытая шерсть, пряжа, топс) и заявка на КП (B2B, без онлайн-оплаты)
 (function () {
-  var D = window.SHOP_DATA, CFG = window.SHOP_CONFIG || { mode: 'demo' };
-  var PRODUCTS = D.PRODUCTS, GRADES = D.GRADES;
+  var D = window.SHOP_DATA, CFG = window.SHOP_CONFIG || {};
+  var PRODUCTS = D.PRODUCTS, GRADES = D.GRADES, CATS = D.CATEGORIES, YARN_TYPES = D.YARN_TYPES;
   var byId = {};
   PRODUCTS.forEach(function (p) { byId[p.id] = p; });
 
   var $ = function (id) { return document.getElementById(id); };
   var all = function (sel) { return [].slice.call(document.querySelectorAll(sel)); };
-  var filters = { grade: 'all', state: 'all', color: 'all' };
-  var cart = load();
+  var filters = { cat: 'all', sub: 'all' };
 
-  // ---------- утилиты ----------
-  function load() {
-    try {
-      var v = JSON.parse(localStorage.getItem('ksh-cart') || '{}'), out = {};
-      Object.keys(v || {}).forEach(function (id) { if (byId[id]) out[id] = norm(byId[id], v[id]); });
-      return out;
-    } catch (e) { return {}; }
-  }
-  function save() { try { localStorage.setItem('ksh-cart', JSON.stringify(cart)); } catch (e) {} }
-  function norm(p, q) {
-    q = parseFloat(q);
-    if (!(q > 0)) q = p.min;
-    q = Math.round(q / p.step) * p.step;
-    return Math.max(p.min, Math.min(q, 5000));
-  }
-  function rub(n) { return Math.round(n).toLocaleString('ru-RU') + ' ₽'; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function ids() { return Object.keys(cart); }
-  function total() { return ids().reduce(function (s, id) { return s + byId[id].price * cart[id]; }, 0); }
   function meter(q) {
     var s = '';
     for (var i = 1; i <= 4; i++) s += '<i' + (i <= q ? ' class="on"' : '') + '></i>';
     return '<span class="meter" role="img" aria-label="Качество ' + q + ' из 4">' + s + '</span>';
   }
-  function stepper(prefix, p, val) {
-    return '<div class="stepper">' +
-      '<button type="button" data-dec="' + p.id + '" aria-label="Меньше">−</button>' +
-      '<input id="' + prefix + p.id + '" type="number" inputmode="decimal" min="' + p.min + '" step="' + p.step + '" value="' + val + '" data-qty="' + p.id + '" aria-label="Количество, кг">' +
-      '<span>кг</span>' +
-      '<button type="button" data-inc="' + p.id + '" aria-label="Больше">+</button></div>';
+  // ---------- иллюстрации пряжи (SVG) ----------
+  // Бобина, пасма или клубок в натуральных цветах. До трёх предметов в ряд — по числу цветов.
+  var artId = 0;
+  function shade(hex, k) {
+    var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    var f = function (c) { return Math.max(0, Math.min(255, Math.round(c * k))); };
+    return 'rgb(' + f(r) + ',' + f(g) + ',' + f(b) + ')';
   }
+  var DRAW = {
+    cone: function (c, id) {
+      return '<defs><pattern id="w' + id + '" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-22)">' +
+        '<rect width="7" height="7" fill="' + c + '"/><path d="M0 3.5h7" stroke="' + shade(c, .82) + '" stroke-width="1.6"/></pattern>' +
+        '<linearGradient id="g' + id + '" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".45" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient></defs>' +
+        '<ellipse cx="120" cy="156" rx="60" ry="8" fill="#000" opacity=".12"/>' +
+        '<path d="M97 38 L143 38 L170 148 Q120 160 70 148 Z" fill="url(#w' + id + ')"/>' +
+        '<path d="M97 38 L143 38 L170 148 Q120 160 70 148 Z" fill="url(#g' + id + ')"/>' +
+        '<ellipse cx="120" cy="38" rx="23" ry="5" fill="' + shade(c, .92) + '"/>' +
+        '<rect x="112" y="18" width="16" height="22" rx="2" fill="#C8B597"/><ellipse cx="120" cy="18" rx="8" ry="2.6" fill="#8E7B5E"/>';
+    },
+    hank: function (c) {
+      var s = '<ellipse cx="120" cy="150" rx="78" ry="7" fill="#000" opacity=".1"/>';
+      s += '<path d="M44 92 C44 64 64 60 72 70 M196 92 C196 64 176 60 168 70" fill="none" stroke="' + shade(c, .78) + '" stroke-width="12" stroke-linecap="round"/>';
+      for (var k = 0; k < 8; k++) {
+        var x = 58 + k * 18;
+        s += '<ellipse cx="' + x + '" cy="96" rx="12" ry="34" transform="rotate(32 ' + x + ' 96)" fill="' + c + '" stroke="' + shade(c, .72) + '" stroke-width="1.5"/>' +
+             '<path d="M' + (x - 8) + ' 78 Q' + x + ' 96 ' + (x + 6) + ' 118" fill="none" stroke="' + shade(c, .8) + '" stroke-width="1.2"/>';
+      }
+      return s;
+    },
+    plied: function (c, id) {
+      var s = '<defs><clipPath id="b' + id + '"><circle cx="120" cy="92" r="54"/></clipPath>' +
+        '<radialGradient id="r' + id + '" cx=".35" cy=".3"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></radialGradient></defs>' +
+        '<ellipse cx="120" cy="152" rx="52" ry="7" fill="#000" opacity=".12"/>' +
+        '<circle cx="120" cy="92" r="54" fill="' + c + '"/><g clip-path="url(#b' + id + ')" fill="none" stroke="' + shade(c, .75) + '" stroke-width="2.2">';
+      [[-35, 44], [-35, 30], [-35, 16], [40, 48], [40, 34], [40, 20], [0, 58]].forEach(function (a) {
+        s += '<ellipse cx="120" cy="92" rx="' + a[1] + '" ry="62" transform="rotate(' + a[0] + ' 120 92)"/>';
+      });
+      return s + '</g><circle cx="120" cy="92" r="54" fill="url(#r' + id + ')"/>' +
+        '<path d="M166 118 C186 130 196 146 214 150" fill="none" stroke="' + shade(c, .85) + '" stroke-width="3" stroke-linecap="round"/>';
+    }
+  };
+  function yarnArt(type, colors) {
+    var list = colors.slice(0, 3), n = list.length, s = n === 1 ? 1 : n === 2 ? .8 : .66;
+    var gap = n === 1 ? 0 : n === 2 ? 58 : 62, out = '';
+    list.forEach(function (c, i) {
+      var id = ++artId, dx = (i - (n - 1) / 2) * gap, dy = (n > 1 && i % 2 === 1) ? 8 : 0;
+      out += '<g transform="translate(' + (120 + dx) + ' ' + (92 + dy) + ') scale(' + s + ') translate(-120 -92)">' + DRAW[type](c, id) + '</g>';
+    });
+    return '<svg viewBox="0 0 240 180" aria-hidden="true" focusable="false">' + out + '</svg>';
+  }
+  function hydrateArt(root) {
+    [].forEach.call(root.querySelectorAll('.yarn-art[data-art]'), function (el) {
+      if (el.firstChild) return;
+      el.innerHTML = yarnArt(el.dataset.art, el.dataset.colors.split(','));
+    });
+  }
+
   var toastTimer;
   function toast(msg) {
     var t = $('toast'); t.textContent = msg; t.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200);
   }
 
   // ---------- анимации ----------
   var motionOK = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  var REVEAL = '.perks-grid > div, .head-row, .gtile, .split-img, .split-text, .section-head, .steps li, .cta-box, .gl-row, .breed-col, .info-block, .ccard, .requisites, .filters';
+  var REVEAL = '.perks-grid > div, .head-row, .gtile, .ind, .quality li, .faq details, .split-img, .split-text, .section-head, .steps li, .cta-box, .gl-row, .breed-col, .info-block, .ccard, .requisites, .filters';
   var io = motionOK && 'IntersectionObserver' in window ? new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
       if (!e.isIntersecting) return;
@@ -76,30 +107,6 @@
     });
   }
 
-  function flyToCart(img) {
-    var btn = document.querySelector('.cart-btn');
-    if (!motionOK || !img || !btn.animate) return bump();
-    var a = img.getBoundingClientRect(), b = btn.getBoundingClientRect();
-    var fly = document.createElement('img');
-    fly.src = img.src; fly.alt = ''; fly.className = 'flyer';
-    fly.style.left = (a.left + a.width / 2 - 32) + 'px';
-    fly.style.top = (a.top + a.height / 2 - 32) + 'px';
-    document.body.appendChild(fly);
-    var dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
-    var anim = fly.animate([
-      { transform: 'translate(0,0) scale(.6)', opacity: 0 },
-      { transform: 'translate(0,-20px) scale(1.1)', opacity: 1, offset: .2 },
-      { transform: 'translate(' + dx * .55 + 'px,' + (dy * .45 - 90) + 'px) scale(.8)', opacity: 1, offset: .6 },
-      { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.25)', opacity: .4 }
-    ], { duration: 850, easing: 'cubic-bezier(.45,0,.3,1)' });
-    anim.onfinish = function () { fly.remove(); bump(); };
-  }
-  function bump() {
-    var c = document.querySelector('.cart-btn');
-    c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
-  }
-
-  // Полоска загрузки вверху при смене раздела
   function progress() {
     var bar = $('route-bar');
     bar.classList.remove('run'); void bar.offsetWidth; bar.classList.add('run');
@@ -108,7 +115,7 @@
   // Волна от точки нажатия на кнопке
   document.addEventListener('pointerdown', function (e) {
     if (!motionOK) return;
-    var b = e.target.closest('.btn, .chip, .cart-btn');
+    var b = e.target.closest('.btn, .chip');
     if (!b || b.disabled) return;
     var r = b.getBoundingClientRect(), s = Math.max(r.width, r.height) * 2.2;
     var w = document.createElement('span');
@@ -141,7 +148,7 @@
     }
   });
 
-  // Фото проявляются из размытия, когда загрузятся
+  // Фото проявляются, когда загрузятся
   function fadeImages(root) {
     if (!motionOK) return;
     [].forEach.call(root.querySelectorAll('img'), function (img) {
@@ -154,28 +161,12 @@
     });
   }
 
-  // Сумма в корзине «докручивается» до нового значения
-  var shownSum = 0;
-  function tweenSum(to) {
-    var els = all('[data-cart-sum]'), from = shownSum;
-    shownSum = to;
-    if (!motionOK || from === to) { els.forEach(function (el) { el.textContent = rub(to); }); return; }
-    var t0 = performance.now();
-    (function step(now) {
-      var k = Math.min(1, (now - t0) / 450), v = from + (to - from) * (1 - Math.pow(1 - k, 3));
-      els.forEach(function (el) { el.textContent = rub(v); });
-      if (k < 1 && shownSum === to) requestAnimationFrame(step);
-    })(t0);
-  }
-
   // ---------- разделы сайта ----------
-  var PAGES = ['glavnaya', 'o-nas', 'katalog', 'dostavka', 'kontakty', 'oformlenie', 'gotovo'];
+  var PAGES = ['glavnaya', 'o-nas', 'katalog', 'dostavka', 'kontakty'];
   var first = true, routeToken = 0;
   function route() {
     var page = location.hash.replace('#', '');
-    if (page === 'oplata') return handlePaymentReturn();
     if (PAGES.indexOf(page) < 0) page = 'glavnaya';
-    if (page === 'oformlenie' && !ids().length) page = 'katalog';
     var curEl = document.querySelector('[data-page]:not([hidden])'), target = $('p-' + page);
     var token = ++routeToken;
     closeMenu();
@@ -203,7 +194,6 @@
       if (a.getAttribute('href') === '#' + page) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
     window.scrollTo({ top: 0, behavior: 'instant' });
-    if (page === 'oformlenie') renderSummary();
     var cur = $('p-' + page);
     if (shown && motionOK && !first) {
       cur.classList.remove('page-in'); void cur.offsetWidth; cur.classList.add('page-in');
@@ -216,8 +206,6 @@
   window.addEventListener('hashchange', route);
 
   // ---------- мобильное меню ----------
-  // Панель справа: блокирует прокрутку страницы, закрывается по Esc, по тапу
-  // на затемнение и по выбору пункта; фокус уходит в меню и возвращается на бургер.
   var desktopMQ = window.matchMedia('(min-width: 1024px)');
   function lockScroll(on) {
     document.body.classList.toggle('scroll-lock', on);
@@ -234,7 +222,7 @@
     if (!menuOpen()) return;
     $('nav').classList.remove('open'); $('nav-scrim').classList.remove('open');
     $('menu-btn').setAttribute('aria-expanded', 'false');
-    if ($('cart').hidden) lockScroll(false);
+    if (!modal.open) lockScroll(false);
     if (returnFocus) $('menu-btn').focus();
   }
   $('menu-btn').addEventListener('click', function () { menuOpen() ? closeMenu(true) : openMenu(); });
@@ -243,251 +231,346 @@
   document.addEventListener('keydown', function (e) {
     if (!menuOpen()) return;
     if (e.key === 'Escape') return closeMenu(true);
-    // Фокус не уходит из открытого меню
     if (e.key === 'Tab') {
       var f = $('nav').querySelectorAll('button, a[href]'), firstEl = f[0], lastEl = f[f.length - 1];
       if (e.shiftKey && document.activeElement === firstEl) { e.preventDefault(); lastEl.focus(); }
       else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); firstEl.focus(); }
     }
   });
-  // При повороте планшета в ширину меню становится обычным, блокировку снимаем
   desktopMQ.addEventListener('change', function (e) { if (e.matches) closeMenu(false); });
 
-  // Плитки сортов на главной открывают каталог с нужным фильтром
-  all('[data-grade-link]').forEach(function (a) {
-    a.addEventListener('click', function () { setFilter('grade', a.dataset.gradeLink); });
-  });
-  Object.keys(GRADES).forEach(function (g) {
-    var min = Math.min.apply(null, PRODUCTS.filter(function (p) { return p.grade === g; }).map(function (p) { return p.price; }));
-    all('[data-minprice="' + g + '"]').forEach(function (el) { el.textContent = 'от ' + rub(min) + ' за кг'; });
+  // Плитки направлений на главной открывают каталог на нужной вкладке
+  all('[data-cat-link]').forEach(function (a) {
+    a.addEventListener('click', function () { setCat(a.dataset.catLink); });
   });
 
   // ---------- каталог ----------
+  // Вкладки = направления. Под ними — уточняющий фильтр: сорт для шерсти и топса, вид для пряжи.
+  var SUBS = {
+    washed: { key: 'grade', label: 'Сорт', opts: [['fine', 'Тонкая'], ['semifine', 'Полутонкая'], ['semicoarse', 'Полугрубая'], ['coarse', 'Грубая']] },
+    tops:   { key: 'grade', label: 'Сорт', opts: [['fine', 'Тонкая'], ['semifine', 'Полутонкая'], ['semicoarse', 'Полугрубая'], ['coarse', 'Грубая']] },
+    yarn:   { key: 'type',  label: 'Вид',  opts: [['cone', 'Бобинная'], ['plied', 'Крученая'], ['hank', 'В пасмах']] }
+  };
   var animateGrid = false;
-  function setFilter(key, val) {
-    filters[key] = val;
-    all('[data-f="' + key + '"]').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === val); });
+  all('#tabs .tab').forEach(function (b) {
+    var c = b.dataset.cat, n = c === 'all' ? PRODUCTS.length : PRODUCTS.filter(function (p) { return p.cat === c; }).length;
+    b.querySelector('.tab-n').textContent = n;
+  });
+  function setCat(cat) {
+    filters.cat = cat; filters.sub = 'all';
+    all('#tabs .tab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.cat === cat); });
+    renderSubs();
     animateGrid = true; renderGrid(); animateGrid = false;
   }
+  function renderSubs() {
+    var box = $('subfilters'), s = SUBS[filters.cat];
+    if (!s) { box.innerHTML = '<span>Направление</span><span class="sub-note">Выберите вкладку, чтобы уточнить сорт или вид пряжи</span>'; return; }
+    box.innerHTML = '<span>' + s.label + '</span><button class="chip" type="button" data-sub="all" aria-pressed="' + (filters.sub === 'all') + '">Все</button>' +
+      s.opts.map(function (o) { return '<button class="chip" type="button" data-sub="' + o[0] + '" aria-pressed="' + (filters.sub === o[0]) + '">' + o[1] + '</button>'; }).join('');
+  }
+  function matches(p) {
+    if (filters.cat !== 'all' && p.cat !== filters.cat) return false;
+    if (filters.sub === 'all') return true;
+    return (SUBS[filters.cat].key === 'type' ? p.type : p.grade) === filters.sub;
+  }
+  function woolCard(p, i) {
+    var g = GRADES[p.grade], tops = p.cat === 'tops';
+    return '<article class="card' + (animateGrid ? ' enter' : '') + '" style="--i:' + i + '">' +
+      '<div class="photo"><img src="assets/photos/' + p.id + '.jpg" alt="' + esc(p.name) + '" loading="lazy">' +
+        '<span class="seal">100% мытая</span>' +
+        '<span class="tag">' + (tops ? 'Топс · лента' : 'Мытая шерсть') + ' · ' + esc(p.color.toLowerCase()) + '</span></div>' +
+      '<div class="card-body">' +
+        '<div class="card-top"><span class="pill">' + g.name + '</span>' + meter(g.q) + '</div>' +
+        '<h3>' + esc(p.name) + '</h3>' +
+        '<p class="breed">' + esc(p.breed) + ' порода · <span class="mono">' + esc(p.micron) + '</span></p>' +
+        '<p class="use">' + esc(p.use) + '</p>' +
+        '<div class="buy"><p class="price-note">Цена — под объём партии</p>' +
+          '<button class="btn add" type="button" data-request="' + p.id + '">Рассчитать партию</button></div>' +
+      '</div></article>';
+  }
+  function yarnCard(p, i) {
+    var dots = p.colors.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('');
+    return '<article class="card card-yarn' + (animateGrid ? ' enter' : '') + '" style="--i:' + i + '">' +
+      '<div class="photo yarn-art" role="img" aria-label="' + esc(p.typeName + ', ' + p.colorNames) + '">' + yarnArt(p.type, p.colors) +
+        '<span class="seal seal-yarn">Без синтетики</span>' +
+        '<span class="tag">' + esc(p.typeName) + '</span></div>' +
+      '<div class="card-body">' +
+        '<div class="card-top"><span class="pill pill-yarn">Пряжа</span><span class="nm mono">' + esc(p.nm) + '</span></div>' +
+        '<h3>' + esc(p.name) + '</h3>' +
+        '<dl class="specs">' +
+          '<dt>Состав</dt><dd>100% кавказская мытая шерсть</dd>' +
+          '<dt>Плотность</dt><dd class="mono">' + esc(p.nm) + ' · ' + esc(p.tex) + '</dd>' +
+          '<dt>Метраж</dt><dd class="mono">' + esc(p.meters) + '</dd>' +
+          '<dt>Формат</dt><dd>' + esc(p.pack) + '</dd>' +
+          '<dt>Цвета</dt><dd><span class="dots">' + dots + '</span>' + esc(p.colorNames) + '; крашение под партию</dd>' +
+          '<dt>Назначение</dt><dd>' + esc(p.use) + '</dd>' +
+        '</dl>' +
+        '<div class="buy"><button class="btn add" type="button" data-request="' + p.id + '">Запросить образцы и КП</button></div>' +
+      '</div></article>';
+  }
   function renderGrid() {
-    var list = PRODUCTS.filter(function (p) {
-      return (filters.grade === 'all' || p.grade === filters.grade) &&
-             (filters.state === 'all' || p.state === filters.state) &&
-             (filters.color === 'all' || p.color === filters.color);
-    });
-    $('found').textContent = 'Товаров: ' + list.length;
+    var list = PRODUCTS.filter(matches);
+    $('found').textContent = 'Позиций: ' + list.length;
     var grid = $('grid');
     if (!list.length) {
-      grid.innerHTML = '<div class="empty"><p>По этим фильтрам ничего нет.</p><button class="btn ghost" type="button" data-reset>Сбросить фильтры</button></div>';
+      grid.innerHTML = '<div class="empty"><p>По этим фильтрам ничего нет.</p><button class="btn ghost" type="button" data-reset>Сбросить фильтр</button></div>';
       return;
     }
-    grid.innerHTML = list.map(function (p, i) {
-      var g = GRADES[p.grade], inCart = cart[p.id];
-      return '<article class="card' + (animateGrid ? ' enter' : '') + '" style="--i:' + i + '" data-card="' + p.id + '">' +
-        '<div class="photo"><img src="assets/photos/' + p.id + '.jpg" alt="' + esc(p.name) + '" loading="lazy">' +
-          '<span class="tag">' + esc(p.state) + ' · ' + esc(p.color.toLowerCase()) + '</span></div>' +
-        '<div class="card-body">' +
-          '<div class="card-top"><span class="pill">' + g.name + '</span>' + meter(g.q) + '</div>' +
-          '<h3>' + esc(p.name) + '</h3>' +
-          '<p class="breed">' + esc(p.breed) + ' порода · <span class="mono">' + esc(p.micron) + '</span></p>' +
-          '<p class="use">' + esc(p.use) + '</p>' +
-          '<div class="buy">' +
-            '<div class="price"><b>' + rub(p.price) + '</b> / кг' + (p.min > 1 ? '<small>от ' + p.min + ' кг</small>' : '') + '</div>' +
-            stepper('q-', p, p.min) +
-            '<button class="btn add" type="button" data-add="' + p.id + '">В корзину</button>' +
-            '<p class="incart"' + (inCart ? '' : ' hidden') + '>В корзине: <b>' + (inCart || 0) + ' кг</b></p>' +
-          '</div>' +
-        '</div></article>';
-    }).join('');
+    grid.innerHTML = list.map(function (p, i) { return p.cat === 'yarn' ? yarnCard(p, i) : woolCard(p, i); }).join('');
     fadeImages(grid);
   }
 
-  function stepInput(input, dir) {
-    var p = byId[input.dataset.qty];
-    input.value = norm(p, (parseFloat(input.value) || p.min) + dir * p.step);
-  }
-
+  $('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('.tab');
+    if (b) setCat(b.dataset.cat);
+  });
+  // Стрелки влево/вправо переключают вкладки, как положено для role="tablist"
+  $('tabs').addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    var tabs = all('#tabs .tab'), i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    var next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+    next.focus(); setCat(next.dataset.cat);
+  });
   $('filters').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-f]');
-    if (b) setFilter(b.dataset.f, b.dataset.v);
+    var b = e.target.closest('[data-sub]');
+    if (!b) return;
+    filters.sub = b.dataset.sub;
+    all('#subfilters [data-sub]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+    animateGrid = true; renderGrid(); animateGrid = false;
   });
-
   $('grid').addEventListener('click', function (e) {
-    var t;
-    if (e.target.closest('[data-reset]')) { ['grade', 'state', 'color'].forEach(function (k) { setFilter(k, 'all'); }); return; }
-    if ((t = e.target.closest('[data-dec]'))) return stepInput($('q-' + t.dataset.dec), -1);
-    if ((t = e.target.closest('[data-inc]'))) return stepInput($('q-' + t.dataset.inc), 1);
-    if ((t = e.target.closest('[data-add]'))) {
-      var p = byId[t.dataset.add], input = $('q-' + p.id);
-      var q = norm(p, input.value);
-      input.value = q;
-      cart[p.id] = norm(p, (cart[p.id] || 0) + q);
-      save(); renderCart(); refreshCard(p.id);
-      flyToCart(t.closest('.card').querySelector('.photo img'));
-      t.classList.add('done'); t.textContent = 'Добавлено ✓';
-      setTimeout(function () { t.classList.remove('done'); t.textContent = 'В корзину'; }, 1400);
-      toast('Добавлено в корзину: ' + p.name + ', ' + q + ' кг');
+    if (e.target.closest('[data-reset]')) setCat(filters.cat);
+  });
+
+  // ---------- заявка на расчёт партии ----------
+  var modal = $('request'), form = $('request-form'), doneBox = $('req-done');
+  var sel = $('r-product');
+  function currentCat() { var r = form.querySelector('input[name="cat"]:checked'); return r ? r.value : 'washed'; }
+  function optLabel(p) { return p.cat === 'yarn' ? p.name + ' — ' + p.typeName.toLowerCase() : p.name + ' — ' + p.breed + ', ' + p.color.toLowerCase(); }
+  // В списке позиций — только выбранное направление; для пряжи показываем поля номера нити и формата
+  function syncCat(keepProduct) {
+    var cat = currentCat(), keep = keepProduct && byId[keepProduct] && byId[keepProduct].cat === cat ? keepProduct : '';
+    sel.innerHTML = '<option value="">Несколько позиций / нужна консультация</option>' +
+      PRODUCTS.filter(function (p) { return p.cat === cat; })
+        .map(function (p) { return '<option value="' + p.id + '">' + esc(optLabel(p)) + '</option>'; }).join('');
+    sel.value = keep;
+    var yarn = cat === 'yarn';
+    $('yarn-fields').hidden = !yarn;
+    if (!yarn) { $('r-count').closest('.field').classList.remove('bad'); $('e-count').textContent = ''; }
+    fillCount();
+  }
+  // Номер нити подставляется из выбранной позиции пряжи — клиенту остаётся поправить при необходимости
+  function fillCount() {
+    var p = byId[sel.value];
+    if (p && p.cat === 'yarn') { $('r-count').value = p.nm; $('r-pack').value = p.type === 'hank' ? 'Пасмы' : 'Бобины'; }
+  }
+  form.addEventListener('change', function (e) {
+    if (e.target.name === 'cat') syncCat(sel.value);
+    if (e.target === sel) fillCount();
+  });
+
+  var lastTrigger = null;
+  function openRequest(productId, trigger, cat) {
+    closeMenu(false);
+    lastTrigger = trigger || null;
+    resetRequest();
+    var p = byId[productId], c = p ? p.cat : (CATS[cat] ? cat : 'washed');
+    form.querySelector('input[name="cat"][value="' + c + '"]').checked = true;
+    syncCat(p ? p.id : '');
+    if (typeof modal.showModal === 'function') modal.showModal(); else modal.setAttribute('open', '');
+    lockScroll(true);
+    setTimeout(function () { $('r-volume').focus(); }, 60);
+  }
+  function closeRequest() {
+    if (!modal.open) return;
+    var finish = function () {
+      modal.classList.remove('closing');
+      if (typeof modal.close === 'function') modal.close(); else modal.removeAttribute('open');
+      lockScroll(false);
+      if (lastTrigger) lastTrigger.focus();
+    };
+    if (!motionOK) return finish();
+    modal.classList.add('closing');
+    setTimeout(finish, 220);
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-request]');
+    if (b) { e.preventDefault(); openRequest(b.dataset.request, b, b.dataset.requestCat); return; }
+    if (e.target.closest('[data-close-modal]')) closeRequest();
+  });
+  // Клик по затемнению вокруг окна закрывает его
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeRequest(); });
+  // Esc: закрываем с анимацией вместо мгновенного закрытия браузером
+  modal.addEventListener('cancel', function (e) { e.preventDefault(); closeRequest(); });
+
+  function resetRequest() {
+    form.reset();
+    form.hidden = false; doneBox.hidden = true;
+    modal.classList.remove('is-done');
+    all('#request-form .bad').forEach(function (el) { el.classList.remove('bad'); });
+    all('#request-form .err').forEach(function (el) { el.textContent = ''; });
+    $('r-msg').textContent = '';
+    setLoading(false);
+  }
+
+  // Проверка полей. Каждое правило возвращает текст ошибки или пустую строку.
+  var RULES = {
+    'r-volume': function () {
+      var v = parseFloat(String($('r-volume').value).replace(',', '.'));
+      if (!(v > 0)) return 'Укажите объём партии';
+      if ($('r-unit').value === 'кг' && v < 1) return 'Минимальная партия — 1 кг';
+      if (v > 100000) return 'Проверьте объём';
+      return '';
+    },
+    'r-name': function () { return $('r-name').value.trim().length >= 2 ? '' : 'Укажите имя или название компании'; },
+    'r-email': function () {
+      var v = $('r-email').value.trim();
+      if (!v) return 'Укажите email — на него придут КП и счёт';
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) ? '' : 'Проверьте адрес: например, zakupki@company.ru';
+    },
+    'r-phone': function () {
+      var d = $('r-phone').value.replace(/\D/g, '');
+      return d.length >= 10 && d.length <= 15 ? '' : 'Укажите телефон, например +7 900 123-45-67';
+    },
+    'r-agree': function () { return $('r-agree').checked ? '' : 'Нужно согласие на обработку данных'; },
+    // Номер нити обязателен только для пряжи
+    'r-count': function () {
+      if (currentCat() !== 'yarn') return '';
+      var v = $('r-count').value.trim();
+      if (!v) return 'Укажите номер нити: например, Nm 32/2 или 62 Tex';
+      return /\d/.test(v) ? '' : 'Номер нити должен содержать число: Nm 32/2, 62 Tex';
     }
-  });
-  $('grid').addEventListener('change', function (e) {
-    var id = e.target.dataset.qty;
-    if (id) e.target.value = norm(byId[id], e.target.value);
-  });
-  function refreshCard(id) {
-    var card = document.querySelector('[data-card="' + id + '"]');
-    if (!card) return;
-    var note = card.querySelector('.incart');
-    note.hidden = !cart[id];
-    if (cart[id]) note.innerHTML = 'В корзине: <b>' + cart[id] + ' кг</b>';
-  }
-
-  // ---------- корзина ----------
-  function renderCart() {
-    var list = ids(), sum = total();
-    all('[data-cart-count]').forEach(function (el) { el.textContent = list.length; el.dataset.n = list.length; });
-    tweenSum(sum);
-    var box = $('cart-items');
-    if (!list.length) {
-      box.innerHTML = '<p class="cart-empty">Корзина пуста. Выберите шерсть в <a href="#katalog" data-close-cart>каталоге</a>.</p>';
-    } else {
-      box.innerHTML = list.map(function (id) {
-        var p = byId[id];
-        return '<div class="line"><img src="assets/photos/' + id + '.jpg" alt="" loading="lazy">' +
-          '<div class="line-info"><b>' + esc(p.name) + '</b><span>' + esc(p.breed) + ' · ' + rub(p.price) + '/кг</span></div>' +
-          '<button class="rm" type="button" data-rm="' + id + '" aria-label="Удалить">×</button>' +
-          stepper('c-', p, cart[id]) +
-          '<div class="line-sum">' + rub(p.price * cart[id]) + '</div></div>';
-      }).join('');
-    }
-    $('to-checkout').disabled = !list.length;
-    renderSummary();
-  }
-
-  function openCart() { closeMenu(false); $('cart').hidden = false; $('scrim').hidden = false; lockScroll(true); $('cart-close').focus(); }
-  function closeCart() {
-    var c = $('cart'), s = $('scrim');
-    if (c.hidden) return;
-    lockScroll(false);
-    if (!motionOK) { c.hidden = true; s.hidden = true; return; }
-    c.classList.add('closing'); s.classList.add('closing');
-    setTimeout(function () { c.hidden = true; s.hidden = true; c.classList.remove('closing'); s.classList.remove('closing'); }, 280);
-  }
-  all('[data-open-cart]').forEach(function (b) { b.addEventListener('click', openCart); });
-  $('cart-close').addEventListener('click', closeCart);
-  $('scrim').addEventListener('click', closeCart);
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('cart').hidden) closeCart(); });
-
-  $('cart-items').addEventListener('click', function (e) {
-    var t, id, p;
-    if (e.target.closest('[data-close-cart]')) return closeCart();
-    if ((t = e.target.closest('[data-rm]'))) { id = t.dataset.rm; delete cart[id]; }
-    else if ((t = e.target.closest('[data-dec]'))) { id = t.dataset.dec; p = byId[id]; if (cart[id] - p.step >= p.min) cart[id] = norm(p, cart[id] - p.step); }
-    else if ((t = e.target.closest('[data-inc]'))) { id = t.dataset.inc; cart[id] = norm(byId[id], cart[id] + byId[id].step); }
-    else return;
-    save(); renderCart(); refreshCard(id);
-  });
-  $('cart-items').addEventListener('change', function (e) {
-    var id = e.target.dataset.qty;
-    if (!id) return;
-    cart[id] = norm(byId[id], e.target.value);
-    save(); renderCart(); refreshCard(id);
-  });
-  $('to-checkout').addEventListener('click', function () { closeCart(); location.hash = 'oformlenie'; });
-
-  // ---------- оформление ----------
-  function delivery() { var r = document.querySelector('input[name="delivery"]:checked'); return r ? r.value : 'cdek'; }
-  function renderSummary() {
-    var list = ids(), sum = total(), d = delivery();
-    $('sum-items').innerHTML = list.map(function (id) {
-      var p = byId[id];
-      return '<li><span>' + esc(p.name) + ' <small>' + cart[id] + ' кг × ' + rub(p.price) + '</small></span><b>' + rub(p.price * cart[id]) + '</b></li>';
-    }).join('') || '<li><span class="muted">Корзина пуста</span></li>';
-    $('sum-goods').textContent = rub(sum);
-    $('sum-delivery').textContent = d === 'pickup' ? 'бесплатно' : 'при получении';
-    $('sum-total').textContent = rub(sum);
-    $('pay-btn').textContent = 'Оплатить ' + rub(sum);
-    $('pay-btn').disabled = !list.length;
-  }
-  $('checkout-form').addEventListener('change', function (e) {
-    if (e.target.name === 'delivery') {
-      $('addr-fields').hidden = delivery() === 'pickup';
-      renderSummary();
-    }
-  });
-
-  function setErr(id, msg) {
-    var box = $(id).closest('.field');
+  };
+  function check(id) {
+    var msg = RULES[id](), input = $(id), box = input.closest('.field');
     box.classList.toggle('bad', !!msg);
-    box.querySelector('.err').textContent = msg || '';
+    input.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    $('e-' + id.slice(2)).textContent = msg;
     return !msg;
   }
-
-  $('checkout-form').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var name = $('f-name').value.trim(), phone = $('f-phone').value.replace(/[^\d+]/g, ''), email = $('f-email').value.trim();
-    var d = delivery(), city = $('f-city').value.trim(), addr = $('f-addr').value.trim();
-    var ok = true;
-    ok = setErr('f-name', name ? '' : 'Укажите имя') && ok;
-    ok = setErr('f-phone', phone.replace(/\D/g, '').length >= 10 ? '' : 'Укажите телефон, например +7 900 123-45-67') && ok;
-    ok = setErr('f-email', !email || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? '' : 'Проверьте адрес почты') && ok;
-    ok = setErr('f-city', d === 'pickup' || city ? '' : 'Укажите город') && ok;
-    ok = setErr('f-addr', d === 'pickup' || addr ? '' : 'Укажите адрес или пункт выдачи') && ok;
-    ok = setErr('f-agree', $('f-agree').checked ? '' : 'Нужно согласие, чтобы оформить заказ') && ok;
-    if (!ok) { var bad = document.querySelector('.bad input, .bad textarea'); if (bad) bad.focus(); return; }
-
-    var order = {
-      items: ids().map(function (id) { return { id: id, kg: cart[id] }; }),
-      customer: { name: name, phone: phone, email: email },
-      delivery: { method: d, city: city, address: addr },
-      comment: $('f-comment').value.trim()
-    };
-    var btn = $('pay-btn'), msg = $('pay-msg');
-    msg.textContent = '';
-
-    if (CFG.mode !== 'live') return finish('Д-' + String(Date.now()).slice(-6), true);
-
-    btn.disabled = true; btn.textContent = 'Переходим к оплате…';
-    fetch(CFG.api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-      .then(function (res) {
-        if (!res.ok || !res.j.confirmation_url) throw new Error(res.j && res.j.error || 'Не удалось создать платёж');
-        try { localStorage.setItem('ksh-last-order', res.j.orderId); } catch (e) {}
-        window.location.href = res.j.confirmation_url;
-      })
-      .catch(function (err) {
-        msg.textContent = err.message + '. Попробуйте ещё раз или позвоните нам.';
-        renderSummary();
-      });
+  // Ошибку показываем после ухода с поля, а убираем сразу, как только значение стало верным
+  Object.keys(RULES).forEach(function (id) {
+    var el = $(id);
+    el.addEventListener('blur', function () { if (el.value || el.type === 'checkbox') check(id); });
+    el.addEventListener('input', function () { if (el.closest('.field').classList.contains('bad')) check(id); });
+    el.addEventListener('change', function () { if (el.type === 'checkbox' || el.closest('.field').classList.contains('bad')) check(id); });
+  });
+  $('r-unit').addEventListener('change', function () { if ($('r-volume').value) check('r-volume'); });
+  // Российский номер из 11 цифр приводим к виду +7 900 123-45-67
+  $('r-phone').addEventListener('blur', function () {
+    var d = this.value.replace(/\D/g, '');
+    if (d.length === 11 && (d[0] === '7' || d[0] === '8')) {
+      this.value = '+7 ' + d.slice(1, 4) + ' ' + d.slice(4, 7) + '-' + d.slice(7, 9) + '-' + d.slice(9, 11);
+    }
   });
 
-  function finish(orderId, demo) {
-    $('done-title').textContent = demo ? 'Заказ оформлен' : 'Заказ оплачен';
-    $('done-id').textContent = orderId;
-    $('done-text').textContent = demo
-      ? 'Это демо-режим: оплата не подключена, деньги не списаны. После запуска сервера здесь откроется страница оплаты ЮKassa.'
-      : 'Спасибо! Оплата получена. Мы позвоним, чтобы согласовать отправку.';
-    cart = {}; save(); renderCart(); renderGrid();
-    location.hash = 'gotovo';
+  function setLoading(on) {
+    var b = $('r-submit');
+    b.disabled = on; b.classList.toggle('loading', on); b.setAttribute('aria-busy', on ? 'true' : 'false');
   }
 
-  // Возврат со страницы оплаты ЮKassa: проверяем, прошла ли оплата
-  function handlePaymentReturn() {
-    var last = '';
-    try { last = localStorage.getItem('ksh-last-order') || ''; } catch (e) {}
-    if (CFG.mode !== 'live' || !last) { location.hash = 'glavnaya'; return; }
-    fetch(CFG.api + '/' + encodeURIComponent(last))
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        if (j.status === 'paid') return finish(last, false);
-        location.hash = 'oformlenie';
-        $('pay-msg').textContent = j.status === 'pending'
-          ? 'Оплата ещё обрабатывается. Обновите страницу через минуту.'
-          : 'Оплата не прошла или была отменена. Корзина сохранена, попробуйте ещё раз.';
+  function collect() {
+    var p = byId[sel.value], cat = currentCat(), yarn = cat === 'yarn';
+    var vol = String($('r-volume').value).replace(',', '.') + ' ' + $('r-unit').value;
+    return {
+      category: CATS[cat].name,
+      product: p ? optLabel(p) : 'Несколько позиций / консультация',
+      count: yarn ? $('r-count').value.trim() : '',
+      pack: yarn ? $('r-pack').value : '',
+      samples: yarn && $('r-samples').checked ? 'Да' : '',
+      volume: vol,
+      name: $('r-name').value.trim(),
+      email: $('r-email').value.trim(),
+      phone: $('r-phone').value.trim(),
+      comment: $('r-comment').value.trim()
+    };
+  }
+  function letter(d) {
+    return 'Направление: ' + d.category + '\nПозиция: ' + d.product +
+      (d.count ? '\nНомер нити: ' + d.count + '\nФормат: ' + d.pack : '') + (d.samples ? '\nНужны образцы: да' : '') +
+      '\nОбъём партии: ' + d.volume + '\nИмя / компания: ' + d.name +
+      '\nEmail: ' + d.email + '\nТелефон: ' + d.phone + (d.comment ? '\nКомментарий / реквизиты: ' + d.comment : '');
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var ok = true, firstBad = null;
+    Object.keys(RULES).forEach(function (id) { if (!check(id)) { ok = false; firstBad = firstBad || $(id); } });
+    if (!ok) {
+      firstBad.focus();
+      form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake');
+      return;
+    }
+    // Бот отметил скрытую ловушку — делаем вид, что всё отправлено
+    if (form.botcheck.checked) return showDone(collect(), 'sent');
+
+    var d = collect();
+    $('r-msg').textContent = '';
+
+    // Онлайн-отправка не подключена: готовим письмо, заявка не теряется
+    if (!CFG.formKey) return showDone(d, 'mail');
+
+    setLoading(true);
+    var ctrl = 'AbortController' in window ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 15000);
+    fetch(CFG.formEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      signal: ctrl ? ctrl.signal : undefined,
+      body: JSON.stringify({
+        access_key: CFG.formKey,
+        subject: 'Заявка на КП (' + d.category + '): ' + d.product + ', ' + d.volume + (d.samples ? ', нужны образцы' : ''),
+        from_name: 'Сайт «Кавказская шерсть»',
+        replyto: d.email,
+        'Направление': d.category,
+        'Позиция': d.product,
+        'Номер нити': d.count || '—',
+        'Формат поставки': d.pack || '—',
+        'Нужны образцы': d.samples || 'нет',
+        'Объём партии': d.volume,
+        'Имя / компания': d.name,
+        'Email': d.email,
+        'Телефон': d.phone,
+        'Комментарий / реквизиты': d.comment || '—'
       })
-      .catch(function () { location.hash = 'oformlenie'; $('pay-msg').textContent = 'Не удалось проверить оплату. Позвоните нам, мы уточним статус заказа.'; });
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok || res.j.success === false) throw new Error(res.j.message || 'сервис не принял заявку');
+        showDone(d, 'sent');
+      })
+      .catch(function (err) {
+        setLoading(false);
+        $('r-msg').textContent = 'Не удалось отправить заявку (' + (err.name === 'AbortError' ? 'нет ответа' : err.message) +
+          '). Попробуйте ещё раз или напишите нам на ' + CFG.salesEmail + '.';
+      })
+      .then(function () { clearTimeout(timer); });
+  });
+
+  function showDone(d, mode) {
+    setLoading(false);
+    var mail = $('done-mail');
+    if (mode === 'sent') {
+      $('done-title').textContent = 'Заявка отправлена';
+      $('done-text').textContent = 'Спасибо! Менеджер рассчитает стоимость и пришлёт коммерческое предложение, спецификации и счёт на ' + d.email + (d.samples ? '. Об отправке образцов договоримся по телефону.' : '.');
+      mail.hidden = true;
+    } else {
+      $('done-title').textContent = 'Заявка готова';
+      $('done-text').textContent = 'Отправьте её письмом на ' + CFG.salesEmail + ': кнопка ниже откроет почту с уже заполненной заявкой. КП, спецификации и счёт придут на ' + d.email + '.';
+      mail.href = 'mailto:' + CFG.salesEmail + '?subject=' + encodeURIComponent('Заявка на КП (' + d.category + '): ' + d.product + ', ' + d.volume) +
+        '&body=' + encodeURIComponent(letter(d));
+      mail.hidden = false;
+    }
+    form.hidden = true;
+    doneBox.hidden = false;
+    modal.classList.add('is-done');
+    doneBox.focus();
+    if (mode === 'sent') toast('Заявка отправлена');
   }
 
+  hydrateArt(document);
+  renderSubs();
   renderGrid();
-  renderCart();
   route();
 })();

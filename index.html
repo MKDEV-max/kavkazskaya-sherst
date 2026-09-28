@@ -108,7 +108,7 @@
             <div><span class="kicker">Сырьё</span><h3>Мытая шерсть</h3><p>Тонкая, полутонкая, полугрубая и грубая. Промыта по ГОСТ, рассортирована по сорту и цвету.</p><span class="from">4 позиции →</span></div>
           </a>
           <a class="gtile gtile-yarn" href="#katalog" data-cat-link="yarn">
-            <div class="yarn-art" data-art="cone" data-colors="#EFE9DC,#9A9F9B,#4A3B32" role="img" aria-label="Бобины пряжи трёх натуральных цветов"></div>
+            <img src="https://images.unsplash.com/photo-1746737198845-e1e74bea786e?auto=format&fit=crop&w=800&q=80" srcset="https://images.unsplash.com/photo-1746737198845-e1e74bea786e?auto=format&fit=crop&w=400&q=80 400w, https://images.unsplash.com/photo-1746737198845-e1e74bea786e?auto=format&fit=crop&w=800&q=80 800w" sizes="(min-width: 768px) 33vw, 100vw" alt="Бобины натуральной пряжи, уложенные на стеллаже" loading="lazy" decoding="async" data-art="cone" data-colors="#EFE9DC,#9A9F9B,#4A3B32">
             <div><span class="kicker">Производство</span><h3>Шерстяная пряжа</h3><p>Бобинная для машинной вязки, крученая и в пасмах. Nm 4/2 — Nm 32/2, натуральные цвета и крашение под партию.</p><span class="from">5 позиций →</span></div>
           </a>
           <a class="gtile" href="#katalog" data-cat-link="tops">
@@ -126,6 +126,10 @@
           <h2>От мойки шерсти до готовой нити</h2>
           <p class="muted">Весь цикл — на нашем производстве. Пряжу прядём из того же мытого сырья, которое поставляем, поэтому отвечаем за качество от руна до бобины.</p>
         </div>
+        <figure class="prod-photo">
+          <img src="https://images.unsplash.com/photo-1636986056375-184676d8ca14?auto=format&fit=crop&w=1600&q=80" srcset="https://images.unsplash.com/photo-1636986056375-184676d8ca14?auto=format&fit=crop&w=800&q=80 800w, https://images.unsplash.com/photo-1636986056375-184676d8ca14?auto=format&fit=crop&w=1600&q=80 1600w" sizes="(min-width: 1320px) 1240px, 100vw" alt="Прядильный цех: ряды машин с бобинами пряжи" loading="lazy" decoding="async" width="1600" height="600">
+          <figcaption>Прядение и кручение: нить заданного номера — от Nm 4/2 до Nm 32/2</figcaption>
+        </figure>
         <ol class="steps">
           <li><b>Бережная мойка</b><p>Моем по ГОСТ до высшей степени очистки: без сора, ланолина и примесей.</p></li>
           <li><b>Гребнечесание</b><p>Выравниваем волокна в ленту и удаляем короткое волокно — основа ровной нити.</p></li>
@@ -295,15 +299,31 @@
     </header>
     <section class="catalog">
       <div class="wrap">
-        <div class="tabs" role="tablist" aria-label="Направление" id="tabs">
-          <button class="tab" role="tab" type="button" data-cat="all" aria-selected="true">Все<span class="tab-n"></span></button>
-          <button class="tab" role="tab" type="button" data-cat="washed" aria-selected="false">Мытая шерсть<span class="tab-n"></span></button>
-          <button class="tab" role="tab" type="button" data-cat="yarn" aria-selected="false">Шерстяная пряжа<span class="tab-n"></span></button>
-          <button class="tab" role="tab" type="button" data-cat="tops" aria-selected="false">Чесаная шерсть / Топс<span class="tab-n"></span></button>
-        </div>
-        <div class="filters" id="filters">
-          <div class="frow" role="group" aria-label="Уточнить" id="subfilters"></div>
-          <span id="found" aria-live="polite"></span>
+        <!-- Панель каталога: направления → уточнение → строка состояния -->
+        <div class="cat-bar" id="filters">
+          <div class="tabs-scroll">
+            <div class="tabs" role="tablist" aria-label="Направление" id="tabs">
+              <button class="tab" role="tab" type="button" data-cat="all" aria-selected="true"><span>Все позиции</span><span class="tab-n"></span></button>
+              <button class="tab" role="tab" type="button" data-cat="washed" aria-selected="false"><span>Мытая шерсть</span><span class="tab-n"></span></button>
+              <button class="tab" role="tab" type="button" data-cat="yarn" aria-selected="false"><span>Шерстяная пряжа</span><span class="tab-n"></span></button>
+              <button class="tab" role="tab" type="button" data-cat="tops" aria-selected="false"><span>Чесаная шерсть / Топс</span><span class="tab-n"></span></button>
+            </div>
+          </div>
+          <div class="subchips" role="group" aria-label="Уточнить" id="subfilters" hidden></div>
+          <div class="status-bar">
+            <p class="status-hint" id="status-hint">Выберите направление, чтобы отфильтровать по сорту сырья или типу намотки.</p>
+            <div class="status-tools">
+              <p class="found" id="found" aria-live="polite"></p>
+              <label class="sort"><span class="sr">Сортировка</span>
+                <select id="sort">
+                  <option value="default">По умолчанию</option>
+                  <option value="fine">Сначала тонкие</option>
+                  <option value="coarse">Сначала плотные</option>
+                </select>
+              </label>
+              <button class="reset" id="reset" type="button" hidden>Сбросить</button>
+            </div>
+          </div>
         </div>
         <div class="grid" id="grid"></div>
       </div>

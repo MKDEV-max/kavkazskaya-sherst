@@ -7,7 +7,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var all = function (sel) { return [].slice.call(document.querySelectorAll(sel)); };
-  var filters = { cat: 'all', sub: 'all' };
+  var filters = { cat: 'all', sub: 'all', sort: 'default' };
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function meter(q) {
@@ -256,17 +256,43 @@
     var c = b.dataset.cat, n = c === 'all' ? PRODUCTS.length : PRODUCTS.filter(function (p) { return p.cat === c; }).length;
     b.querySelector('.tab-n').textContent = n;
   });
+  var HINTS = {
+    all: 'Выберите направление, чтобы отфильтровать по сорту сырья или типу намотки.',
+    washed: 'Уточните сорт: от тонкой шерсти до 25 мкм до прочной грубой.',
+    tops: 'Уточните сорт гребенной ленты под вашу задачу: прядение или валяние.',
+    yarn: 'Уточните тип намотки: бобины для машинной вязки, крученая нить или пасмы.'
+  };
   function setCat(cat) {
     filters.cat = cat; filters.sub = 'all';
-    all('#tabs .tab').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.cat === cat); });
+    all('#tabs .tab').forEach(function (b) {
+      var on = b.dataset.cat === cat;
+      b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
+      // активная вкладка всегда видна в горизонтальной ленте на телефоне
+      if (on && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: motionOK ? 'smooth' : 'auto' });
+    });
     renderSubs();
-    animateGrid = true; renderGrid(); animateGrid = false;
+    refresh();
   }
   function renderSubs() {
     var box = $('subfilters'), s = SUBS[filters.cat];
-    if (!s) { box.innerHTML = '<span>Направление</span><span class="sub-note">Выберите вкладку, чтобы уточнить сорт или вид пряжи</span>'; return; }
-    box.innerHTML = '<span>' + s.label + '</span><button class="chip" type="button" data-sub="all" aria-pressed="' + (filters.sub === 'all') + '">Все</button>' +
+    box.hidden = !s;
+    if (!s) { box.innerHTML = ''; return; }
+    box.innerHTML = '<span class="subchips-label">' + s.label + ':</span>' +
+      '<button class="chip" type="button" data-sub="all" aria-pressed="' + (filters.sub === 'all') + '">Все</button>' +
       s.opts.map(function (o) { return '<button class="chip" type="button" data-sub="' + o[0] + '" aria-pressed="' + (filters.sub === o[0]) + '">' + o[1] + '</button>'; }).join('');
+  }
+  // Склонение: 1 позиция, 2 позиции, 5 позиций
+  function plural(n, one, few, many) {
+    var m10 = n % 10, m100 = n % 100;
+    return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+  }
+  function refresh() {
+    animateGrid = true; var n = renderGrid(); animateGrid = false;
+    $('status-hint').textContent = HINTS[filters.cat];
+    $('found').innerHTML = filters.cat === 'yarn'
+      ? 'Показано: <b>' + n + '</b> ' + plural(n, 'вид', 'вида', 'видов') + ' пряжи'
+      : 'Найдено: <b>' + n + '</b> ' + plural(n, 'позиция', 'позиции', 'позиций');
+    $('reset').hidden = filters.cat === 'all' && filters.sub === 'all' && filters.sort === 'default';
   }
   function matches(p) {
     if (filters.cat !== 'all' && p.cat !== filters.cat) return false;
@@ -291,7 +317,11 @@
   function yarnCard(p, i) {
     var dots = p.colors.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('');
     return '<article class="card card-yarn' + (animateGrid ? ' enter' : '') + '" style="--i:' + i + '">' +
-      '<div class="photo yarn-art" role="img" aria-label="' + esc(p.typeName + ', ' + p.colorNames) + '">' + yarnArt(p.type, p.colors) +
+      '<div class="photo' + (p.img ? '' : ' yarn-art') + '">' +
+        (p.img
+          ? '<img src="' + p.img + '" srcset="' + p.img400 + ' 400w, ' + p.img + ' 800w" sizes="(min-width: 1024px) 33vw, (min-width: 600px) 50vw, 100vw"' +
+            ' alt="' + esc(p.name + ', ' + p.colorNames) + '" loading="lazy" decoding="async" data-art="' + p.type + '" data-colors="' + p.colors.join(',') + '">'
+          : yarnArt(p.type, p.colors)) +
         '<span class="seal seal-yarn">Без синтетики</span>' +
         '<span class="tag">' + esc(p.typeName) + '</span></div>' +
       '<div class="card-body">' +
@@ -301,7 +331,8 @@
           '<dt>Состав</dt><dd>100% кавказская мытая шерсть</dd>' +
           '<dt>Плотность</dt><dd class="mono">' + esc(p.nm) + ' · ' + esc(p.tex) + '</dd>' +
           '<dt>Метраж</dt><dd class="mono">' + esc(p.meters) + '</dd>' +
-          '<dt>Формат</dt><dd>' + esc(p.pack) + '</dd>' +
+          '<dt>Вес</dt><dd>' + esc(p.weight) + '</dd>' +
+          '<dt>Поставка</dt><dd>' + esc(p.pack) + '</dd>' +
           '<dt>Цвета</dt><dd><span class="dots">' + dots + '</span>' + esc(p.colorNames) + '; крашение под партию</dd>' +
           '<dt>Назначение</dt><dd>' + esc(p.use) + '</dd>' +
         '</dl>' +
@@ -310,14 +341,31 @@
   }
   function renderGrid() {
     var list = PRODUCTS.filter(matches);
-    $('found').textContent = 'Позиций: ' + list.length;
+    if (filters.sort !== 'default') {
+      var dir = filters.sort === 'fine' ? -1 : 1;
+      list = list.slice().sort(function (a, b) { return dir * (a.fineness - b.fineness); });
+    }
     var grid = $('grid');
     if (!list.length) {
       grid.innerHTML = '<div class="empty"><p>По этим фильтрам ничего нет.</p><button class="btn ghost" type="button" data-reset>Сбросить фильтр</button></div>';
-      return;
+      return 0;
     }
     grid.innerHTML = list.map(function (p, i) { return p.cat === 'yarn' ? yarnCard(p, i) : woolCard(p, i); }).join('');
     fadeImages(grid);
+    photoFallback(grid);
+    return list.length;
+  }
+  // Если фото пряжи не загрузилось (нет сети, блокировка), показываем векторную иллюстрацию
+  function photoFallback(root) {
+    [].forEach.call(root.querySelectorAll('img[data-art]'), function (img) {
+      var swap = function () {
+        var box = img.parentNode;
+        box.classList.add('yarn-art');
+        img.outerHTML = yarnArt(img.dataset.art, img.dataset.colors.split(','));
+      };
+      if (img.complete && !img.naturalWidth && img.src) swap();
+      else img.addEventListener('error', swap, { once: true });
+    });
   }
 
   $('tabs').addEventListener('click', function (e) {
@@ -332,15 +380,18 @@
     var next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
     next.focus(); setCat(next.dataset.cat);
   });
-  $('filters').addEventListener('click', function (e) {
+  $('subfilters').addEventListener('click', function (e) {
     var b = e.target.closest('[data-sub]');
     if (!b) return;
     filters.sub = b.dataset.sub;
     all('#subfilters [data-sub]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
-    animateGrid = true; renderGrid(); animateGrid = false;
+    refresh();
   });
+  $('sort').addEventListener('change', function () { filters.sort = this.value; refresh(); });
+  function resetAll() { filters.sort = 'default'; $('sort').value = 'default'; setCat('all'); }
+  $('reset').addEventListener('click', resetAll);
   $('grid').addEventListener('click', function (e) {
-    if (e.target.closest('[data-reset]')) setCat(filters.cat);
+    if (e.target.closest('[data-reset]')) resetAll();
   });
 
   // ---------- заявка на расчёт партии ----------
@@ -570,7 +621,8 @@
   }
 
   hydrateArt(document);
+  photoFallback(document);
   renderSubs();
-  renderGrid();
+  refresh();
   route();
 })();

@@ -357,6 +357,11 @@
   }
   // Если фото пряжи не загрузилось (нет сети, блокировка), показываем векторную иллюстрацию
   function photoFallback(root) {
+    // Фото без иллюстрации-замены (цех на главной): если не загрузилось — прячем блок целиком
+    [].forEach.call(root.querySelectorAll('img[data-hide-on-error]'), function (img) {
+      var hide = function () { var f = img.closest('figure'); if (f) f.hidden = true; };
+      if (img.complete && !img.naturalWidth && img.src) hide(); else img.addEventListener('error', hide, { once: true });
+    });
     [].forEach.call(root.querySelectorAll('img[data-art]'), function (img) {
       var swap = function () {
         var box = img.parentNode;
